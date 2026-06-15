@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Doremix — Brand System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --ink: #0B0B0F;
+    --ink-2: #14141B;
+    --ink-3: #1E1E28;
+    --paper: #F4F1EA;
+    --mist: #A6A3B0;
+    --energy-1: #FF3D81;
+    --energy-2: #FF9F1C;
+    --energy-3: #2EC4B6;
+    --live: #3DFF88;
+    --energy: linear-gradient(90deg, #FF3D81 0%, #FF9F1C 50%, #2EC4B6 100%);
+    --font-display: "Space Grotesk", system-ui, sans-serif;
+    --font-body: "Inter", system-ui, sans-serif;
+    --font-mono: "JetBrains Mono", ui-monospace, monospace;
+    --maxw: 1180px;
+    --gut: clamp(20px, 4vw, 56px);
+  }
+
+  * { box-sizing: border-box; }
+  html { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+  body {
+    margin: 0;
+    background: var(--ink);
+    color: var(--paper);
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.55;
+    overflow-x: hidden;
+  }
+
+  /* Film grain overlay — subtle, fixed, non-interactive */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0.04;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  }
+
+  ::selection { background: rgba(255,61,129,0.32); color: var(--paper); }
+
+  a { color: inherit; }
+
+  .wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 var(--gut); }
+
+  /* ---------- shared section chrome ---------- */
+  section { position: relative; border-top: 1px solid var(--ink-3); }
+  section:first-of-type { border-top: none; }
+
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--mist);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .eyebrow::before {
+    content: "";
+    width: 22px; height: 1px;
+    background: var(--energy);
+  }
+  .eyebrow .idx { color: var(--ink-3); -webkit-text-stroke: 0; }
+
+  h2.sec {
+    font-family: var(--font-display);
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    font-size: clamp(28px, 4.4vw, 46px);
+    margin: 18px 0 0;
+    line-height: 1.04;
+  }
+  .sec-sub {
+    color: var(--mist);
+    max-width: 56ch;
+    margin: 14px 0 0;
+    font-size: 15px;
+  }
+  .sec-head { padding: clamp(64px, 8vw, 104px) 0 clamp(30px, 4vw, 48px); }
+
+  /* ---------- HERO ---------- */
+  .hero {
+    min-height: 100svh;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding-top: 28px;
+    padding-bottom: 0;
+    overflow: hidden;
+  }
+  .topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--mist);
+  }
+  .topbar .live-tag {
+    display: inline-flex; align-items: center; gap: 7px;
+    color: var(--paper);
+  }
+  .topbar .dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--live);
+    box-shadow: 0 0 0 0 rgba(61,255,136,0.55);
+    animation: pulse 2.4s cubic-bezier(0.2,0.8,0.2,1) infinite;
+  }
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(61,255,136,0.5); }
+    70% { box-shadow: 0 0 0 7px rgba(61,255,136,0); }
+    100% { box-shadow: 0 0 0 0 rgba(61,255,136,0); }
+  }
+
+  .hero-center {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    gap: 26px;
+    padding: 40px 0;
+  }
+  .wordmark-svg { width: min(640px, 86vw); height: auto; display: block; }
+  .tagline {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: clamp(15px, 2vw, 21px);
+    letter-spacing: -0.01em;
+    color: var(--paper);
+    max-width: 30ch;
+    line-height: 1.4;
+  }
+  .tagline b { font-weight: 500; }
+  .tagline .ghost { color: var(--mist); }
+
+  /* hero energy curve full-bleed at bottom */
+  .hero-curve { width: 100%; display: block; }
+  .hero-curve svg { width: 100%; height: clamp(150px, 22vw, 240px); display: block; }
+
+  /* animated energy line */
+  .e-line {
+    fill: none;
+    stroke: url(#energyStroke);
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    filter: drop-shadow(0 0 7px rgba(255,159,28,0.28));
+  }
+  .e-line.draw {
+    stroke-dasharray: 2600;
+    stroke-dashoffset: 2600;
+    animation: draw 2.6s cubic-bezier(0.2,0.8,0.2,1) forwards;
+  }
+  @keyframes draw { to { stroke-dashoffset: 0; } }
+
+  .e-fill { opacity: 0.14; }
+  .playhead { animation: breathe 3.4s ease-in-out infinite; }
+  @keyframes breathe { 0%,100% { opacity: 0.55; } 50% { opacity: 1; } }
+
+  /* beat-reactive bars under the curve (only "playing" idea) */
+  .beatbars rect { transform-box: fill-box; transform-origin: bottom; }
+  .beatbars rect:nth-child(odd) { animation: beat 0.9s ease-in-out infinite; }
+  .beatbars rect:nth-child(even) { animation: beat 0.62s ease-in-out infinite; }
+  .beatbars rect:nth-child(3n) { animation-duration: 1.15s; }
+  @keyframes beat { 0%,100% { transform: scaleY(0.35);} 50% { transform: scaleY(1);} }
+
+  /* ---------- LOGO SYSTEM ---------- */
+  .logo-grid {
+    display: grid;
+    grid-template-columns: 1.3fr 1fr;
+    gap: 20px;
+    padding-bottom: clamp(40px, 6vw, 72px);
+  }
+  .panel {
+    background: var(--ink-2);
+    border: 1px solid var(--ink-3);
+    border-radius: 14px;
+    padding: 30px;
+    position: relative;
+  }
+  .panel .label {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--mist);
+    margin-bottom: 22px;
+  }
+  .panel.paper { background: var(--paper); color: var(--ink); }
+  .panel.paper .label { color: #6b6862; }
+
+  .mark-row { display: flex; align-items: flex-end; gap: 34px; flex-wrap: wrap; }
+  .mark-row .cap { font-family: var(--font-mono); font-size: 11px; color: var(--mist); }
+  .panel.paper .cap { color: #6b6862; }
+
+  .construct {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .mini {
+    background: var(--ink);
+    border: 1px solid var(--ink-3);
+    border-radius: 10px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+  }
+  .mini .cap { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--mist); }
+
+  /* clear-space guide */
+  .clearspace { position: relative; }
+  .clearspace .guide { stroke: var(--energy-2); stroke-width: 1; stroke-dasharray: 3 4; opacity: 0.5; fill: none; }
+
+  /* ---------- COLOR ---------- */
+  .color-block { padding-bottom: clamp(40px, 6vw, 72px); }
+  .gradbar {
+    height: 90px;
+    border-radius: 12px;
+    background: var(--energy);
+    position: relative;
+    border: 1px solid rgba(255,255,255,0.06);
+    overflow: hidden;
+  }
+  .gradbar .stops {
+    position: absolute; inset: auto 0 0 0;
+    display: flex; justify-content: space-between;
+    padding: 0 14px 10px;
+    font-family: var(--font-mono); font-size: 10.5px;
+    color: rgba(11,11,15,0.78); font-weight: 600;
+    letter-spacing: 0.04em;
+  }
+  .grad-caption {
+    font-family: var(--font-mono); font-size: 11px; color: var(--mist);
+    margin-top: 14px; display: flex; gap: 8px; align-items: center;
+  }
+  .grad-caption code { color: var(--paper); }
+
+  .swatches {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+    gap: 12px;
+    margin-top: 22px;
+  }
+  .sw {
+    background: var(--ink-2);
+    border: 1px solid var(--ink-3);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .sw .chip { height: 72px; }
+  .sw .meta { padding: 13px 14px 15px; }
+  .sw .name { font-family: var(--font-mono); font-size: 12px; color: var(--paper); }
+  .sw .hex { font-family: var(--font-mono); font-size: 11px; color: var(--mist); margin-top: 3px; }
+  .sw .role { font-size: 12px; color: var(--mist); margin-top: 8px; line-height: 1.35; }
+  .sw .chip.bordered { box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06); }
+
+  .ration-note {
+    margin-top: 26px;
+    display: flex; gap: 14px; align-items: flex-start;
+    border: 1px solid var(--ink-3);
+    border-left: 2px solid transparent;
+    border-image: var(--energy) 1;
+    background: var(--ink-2);
+    border-radius: 0 12px 12px 0;
+    padding: 18px 22px;
+  }
+  .ration-note .k { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--energy-2); white-space: nowrap; }
+  .ration-note p { margin: 0; font-size: 14px; color: var(--mist); }
+  .ration-note p b { color: var(--paper); font-weight: 500; }
+
+  /* ---------- TYPOGRAPHY ---------- */
+  .type-block { padding-bottom: clamp(40px, 6vw, 72px); }
+  .type-fam {
+    border-top: 1px solid var(--ink-3);
+    padding: 30px 0;
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 30px;
+  }
+  .type-fam:first-child { border-top: none; }
+  .type-fam .fam-meta .nm { font-family: var(--font-display); font-size: 19px; font-weight: 500; letter-spacing: -0.01em; }
+  .type-fam .fam-meta .use { font-family: var(--font-mono); font-size: 11px; color: var(--mist); margin-top: 8px; letter-spacing: 0.06em; }
+  .type-fam .fam-meta .wts { font-family: var(--font-mono); font-size: 10.5px; color: var(--ink-3); margin-top: 14px; }
+  .type-fam .fam-meta .wts span { color: var(--mist); }
+
+  .specimen-display {
+    font-family: var(--font-display);
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    font-size: clamp(34px, 5vw, 56px);
+    line-height: 0.98;
+    margin: 0;
+  }
+  .specimen-display .lo { color: var(--mist); }
+  .specimen-body { font-family: var(--font-body); font-size: 16px; color: var(--mist); max-width: 60ch; margin: 16px 0 0; }
+  .specimen-body b { color: var(--paper); font-weight: 500; }
+
+  .cue {
+    background: var(--ink);
+    border: 1px solid var(--ink-3);
+    border-radius: 10px;
+    padding: 18px 20px;
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    line-height: 1.7;
+    overflow-x: auto;
+  }
+  .cue .c-dim { color: var(--mist); }
+  .cue .c-key { color: var(--energy-2); }
+  .cue .c-bpm { color: var(--energy-1); }
+  .cue .c-cool { color: var(--energy-3); }
+  .cue .c-live { color: var(--live); }
+
+  .scale-row { display: flex; align-items: baseline; flex-wrap: wrap; gap: 24px 30px; margin-top: 4px; }
+  .scale-row .s { font-family: var(--font-display); font-weight: 500; letter-spacing: -0.02em; color: var(--paper); line-height: 1; }
+  .scale-row .s small { display: block; font-family: var(--font-mono); font-size: 10px; color: var(--mist); letter-spacing: 0.08em; margin-top: 6px; font-weight: 400; }
+
+  /* ---------- MOTION + VOICE ---------- */
+  .mv-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    padding-bottom: clamp(40px, 6vw, 72px);
+  }
+  .voice-list { display: flex; flex-direction: column; gap: 12px; margin-top: 6px; }
+  .vrow {
+    display: flex; gap: 14px; align-items: flex-start;
+    padding: 15px 18px;
+    border-radius: 10px;
+    border: 1px solid var(--ink-3);
+    background: var(--ink);
+  }
+  .vrow .mk { font-family: var(--font-mono); font-size: 13px; font-weight: 600; line-height: 1.5; flex-shrink: 0; }
+  .vrow.yes .mk { color: var(--live); }
+  .vrow.no .mk { color: var(--energy-1); }
+  .vrow.yes .txt { color: var(--paper); }
+  .vrow.no .txt { color: var(--mist); text-decoration: line-through; text-decoration-color: rgba(166,163,176,0.4); }
+  .vrow .txt { font-family: var(--font-display); font-weight: 400; font-size: 15px; letter-spacing: -0.01em; }
+
+  .motion-spec { display: flex; flex-direction: column; gap: 0; margin-top: 6px; }
+  .mspec {
+    display: flex; justify-content: space-between; align-items: center; gap: 16px;
+    padding: 16px 2px;
+    border-top: 1px solid var(--ink-3);
+  }
+  .mspec:first-child { border-top: none; }
+  .mspec .k { font-size: 14px; color: var(--paper); }
+  .mspec .v { font-family: var(--font-mono); font-size: 11.5px; color: var(--mist); text-align: right; }
+  .mspec .v b { color: var(--energy-2); font-weight: 500; }
+
+  .easing-demo {
+    margin-top: 18px;
+    border: 1px solid var(--ink-3);
+    border-radius: 10px;
+    background: var(--ink);
+    padding: 16px 18px;
+    overflow: hidden;
+  }
+  .easing-demo .track {
+    height: 3px; background: var(--ink-3); border-radius: 2px; position: relative; margin-top: 10px;
+  }
+  .easing-demo .runner {
+    position: absolute; top: -3.5px; left: 0;
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--energy-2);
+    box-shadow: 0 0 10px rgba(255,159,28,0.6);
+    animation: runner 2.6s cubic-bezier(0.2,0.8,0.2,1) infinite;
+  }
+  @keyframes runner {
+    0% { left: 0; } 45% { left: calc(100% - 10px); }
+    55% { left: calc(100% - 10px); } 100% { left: 0; }
+  }
+  .easing-demo .cap { font-family: var(--font-mono); font-size: 10.5px; color: var(--mist); letter-spacing: 0.08em; }
+
+  /* ---------- UI TEXTURE PREVIEW ---------- */
+  .ui-block { padding-bottom: clamp(48px, 7vw, 88px); }
+  .deck {
+    background: var(--ink-2);
+    border: 1px solid var(--ink-3);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 40px 80px -40px rgba(0,0,0,0.7);
+    margin-top: 6px;
+  }
+  .deck-bar {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--ink-3);
+    font-family: var(--font-mono); font-size: 11px; color: var(--mist);
+    letter-spacing: 0.04em;
+  }
+  .deck-bar .tt { color: var(--paper); }
+  .deck-bar .spacer { flex: 1; }
+  .deck-bar .live { display: inline-flex; align-items: center; gap: 6px; color: var(--live); }
+  .deck-bar .live .d { width: 6px; height: 6px; border-radius: 50%; background: var(--live); animation: pulse 2.4s cubic-bezier(0.2,0.8,0.2,1) infinite; }
+
+  .deck-main { display: grid; grid-template-columns: 1fr 290px; }
+  @media (max-width: 720px) { .deck-main { grid-template-columns: 1fr; } }
+
+  .deck-curve { padding: 22px 20px 14px; border-right: 1px solid var(--ink-3); }
+  .deck-curve .ctitle { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--mist); margin-bottom: 6px; display:flex; justify-content: space-between;}
+  .deck-curve svg { width: 100%; height: 130px; display: block; }
+
+  .deck-decks { display: flex; gap: 10px; margin-top: 16px; }
+  .dk {
+    flex: 1; background: var(--ink); border: 1px solid var(--ink-3); border-radius: 10px; padding: 12px 13px;
+  }
+  .dk .nm { font-family: var(--font-display); font-weight: 500; font-size: 13px; letter-spacing: -0.01em; }
+  .dk .ar { font-size: 11px; color: var(--mist); margin-top: 2px; }
+  .dk .chips { display: flex; gap: 6px; margin-top: 10px; }
+  .dk .chip2 { font-family: var(--font-mono); font-size: 10px; padding: 3px 7px; border-radius: 5px; border: 1px solid var(--ink-3); color: var(--mist); }
+  .dk .chip2.bpm { color: var(--energy-1); border-color: rgba(255,61,129,0.3); }
+  .dk .chip2.key { color: var(--energy-2); border-color: rgba(255,159,28,0.3); }
+  .dk.b .chip2.key { color: var(--energy-3); border-color: rgba(46,196,182,0.3); }
+  .dk.b .chip2.bpm { color: var(--energy-3); border-color: rgba(46,196,182,0.3); }
+
+  .wf { margin-top: 11px; height: 26px; display: flex; align-items: center; gap: 2px; }
+  .wf i { flex: 1; background: var(--ink-3); border-radius: 1px; }
+
+  .deck-cue { padding: 18px 18px; }
+  .deck-cue .ctitle { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--mist); margin-bottom: 12px; }
+  .cuesheet { font-family: var(--font-mono); font-size: 11px; line-height: 1.85; }
+  .cuesheet .ln { display: grid; grid-template-columns: 42px 1fr; gap: 10px; }
+  .cuesheet .tc { color: var(--ink-3); }
+  .cuesheet .tc.on { color: var(--live); }
+  .cuesheet .ev { color: var(--mist); }
+  .cuesheet .ev .hi { color: var(--paper); }
+  .cuesheet .ev .pk { color: var(--energy-1); }
+  .cuesheet .ev .rl { color: var(--energy-3); }
+
+  .deck-prompt {
+    margin-top: 16px; display: flex; gap: 7px; flex-wrap: wrap;
+  }
+  .qp {
+    font-family: var(--font-mono); font-size: 10.5px;
+    padding: 6px 10px; border-radius: 20px;
+    border: 1px solid var(--ink-3); color: var(--mist);
+    background: var(--ink);
+  }
+  .qp.hot { color: var(--paper); border-color: rgba(255,61,129,0.4); }
+  .deck-input {
+    margin-top: 12px;
+    display: flex; align-items: center; gap: 10px;
+    border: 1px solid var(--ink-3); border-radius: 9px;
+    padding: 10px 12px; background: var(--ink);
+    font-family: var(--font-display); font-size: 13px; color: var(--mist);
+  }
+  .deck-input .cursor { width: 1px; height: 15px; background: var(--energy-2); animation: blink 1.1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  .deck-input .go {
+    margin-left: auto; font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--ink);
+    background: var(--energy); padding: 6px 12px; border-radius: 6px; font-weight: 600;
+  }
+
+  /* ---------- ANTI-SLOP ---------- */
+  .slop-block { padding-bottom: clamp(56px, 8vw, 110px); }
+  .slop-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(248px, 1fr));
+    gap: 12px; margin-top: 6px;
+  }
+  .slop {
+    border: 1px solid var(--ink-3);
+    border-radius: 12px;
+    background: var(--ink-2);
+    padding: 18px 20px;
+    display: flex; gap: 14px; align-items: flex-start;
+  }
+  .slop .no {
+    font-family: var(--font-mono); font-weight: 600; font-size: 13px; color: var(--energy-1);
+    flex-shrink: 0; line-height: 1.5;
+  }
+  .slop .t { font-size: 14px; color: var(--paper); line-height: 1.4; }
+  .slop .t span { display: block; color: var(--mist); font-size: 12.5px; margin-top: 4px; }
+
+  /* ---------- FOOTER ---------- */
+  footer {
+    border-top: 1px solid var(--ink-3);
+    padding: 40px 0 64px;
+    display: flex; justify-content: space-between; align-items: center; gap: 20px; flex-wrap: wrap;
+    font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.08em; color: var(--mist);
+  }
+  footer .energy-rule { width: 100%; height: 2px; background: var(--energy); border-radius: 2px; margin-bottom: 30px; opacity: 0.85; }
+  footer a { text-decoration: none; color: var(--mist); transition: color 160ms cubic-bezier(0.2,0.8,0.2,1); }
+  footer a:hover { color: var(--paper); }
+
+  @media (max-width: 820px) {
+    .logo-grid, .mv-grid { grid-template-columns: 1fr; }
+    .type-fam { grid-template-columns: 1fr; gap: 16px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; }
+    .e-line.draw { stroke-dashoffset: 0; }
+  }
+</style>
+</head>
+<body>
+
+<!-- =================== HERO =================== -->
+<section class="hero">
+  <div class="wrap topbar">
+    <span>Doremix — Brand System / v1</span>
+    <span class="live-tag"><span class="dot"></span>BROWSER AI DJ</span>
+  </div>
+
+  <div class="wrap hero-center">
+    <!-- WORDMARK with crossfade-x -->
+    <svg class="wordmark-svg" viewBox="0 0 640 150" role="img" aria-label="Doremix wordmark">
+      <defs>
+        <linearGradient id="xGrad" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#FF3D81"/>
+          <stop offset="0.5" stop-color="#FF9F1C"/>
+          <stop offset="1" stop-color="#2EC4B6"/>
+        </linearGradient>
+      </defs>
+      <!-- "Doremi" set in Space Grotesk Medium -->
+      <text x="50" y="103" font-family="'Space Grotesk', sans-serif" font-weight="500"
+            font-size="108" letter-spacing="-3" fill="#F4F1EA">Doremi</text>
+      <!-- the X as a crossfade: two crossing waveform strokes, gradient -->
+      <g transform="translate(498,30)" stroke="url(#xGrad)" stroke-width="9" stroke-linecap="round" fill="none">
+        <!-- stroke A: fading IN (rising), drawn as a small wave -->
+        <path d="M2 78 C 14 60, 22 32, 38 14 C 46 5, 54 2, 62 2" opacity="0.95"/>
+        <!-- stroke B: fading OUT (falling), crosses A -->
+        <path d="M2 2 C 14 18, 24 46, 40 64 C 48 73, 56 78, 62 78" opacity="0.95"/>
+        <!-- two short waveform ticks reinforcing the blend -->
+        <path d="M-9 40 q 6 -12 12 0 t 12 0" stroke-width="3" opacity="0.45"/>
+      </g>
+    </svg>
+
+    <p class="tagline"><b>Describe the vibe.</b> <span class="ghost">Doremix conducts a live, editable mix of your own tracks.</span></p>
+  </div>
+
+  <!-- HERO ENERGY CURVE: the brand motif -->
+  <div class="hero-curve" aria-hidden="true">
+    <svg viewBox="0 0 1440 240" preserveAspectRatio="none">
+      <defs>
+        <linearGradient id="energyStroke" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#FF3D81"/>
+          <stop offset="0.5" stop-color="#FF9F1C"/>
+          <stop offset="1" stop-color="#2EC4B6"/>
+        </linearGradient>
+        <linearGradient id="energyFill" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#FF3D81"/>
+          <stop offset="0.5" stop-color="#FF9F1C"/>
+          <stop offset="1" stop-color="#2EC4B6"/>
+        </linearGradient>
+      </defs>
+      <!-- the set energy arc: build → peak → release -->
+      <path class="e-fill" fill="url(#energyFill)"
+        d="M0 210 C 220 205, 300 150, 430 150 C 560 150, 600 60, 760 55 C 880 51, 920 110, 1040 108 C 1180 106, 1240 30, 1440 40 L 1440 240 L 0 240 Z"/>
+      <path class="e-line draw"
+        d="M0 210 C 220 205, 300 150, 430 150 C 560 150, 600 60, 760 55 C 880 51, 920 110, 1040 108 C 1180 106, 1240 30, 1440 40"/>
+      <!-- breathing playhead marker at the peak -->
+      <g class="playhead">
+        <circle cx="760" cy="55" r="5.5" fill="#FF9F1C"/>
+        <circle cx="760" cy="55" r="11" fill="none" stroke="#FF9F1C" stroke-width="1" opacity="0.4"/>
+      </g>
+    </svg>
+  </div>
+</section>
+
+<!-- =================== 2. LOGO SYSTEM =================== -->
+<section>
+  <div class="wrap sec-head">
+    <div class="eyebrow"><span class="idx">02</span> Logo System</div>
+    <h2 class="sec">A wordmark that blends, a mark that meters.</h2>
+    <p class="sec-sub">The <b style="color:var(--paper);font-weight:500">x</b> is a crossfade — two waveform strokes crossing as one fades in and the other out. The standalone mark is three rising EQ bars (40 / 70 / 100%): a kin to Doremi's three waves, redrawn as an energy meter.</p>
+  </div>
+
+  <div class="wrap logo-grid">
+    <!-- on ink -->
+    <div class="panel">
+      <div class="label">Wordmark — on ink</div>
+      <div class="clearspace" style="display:flex;justify-content:center;padding:30px 0 14px;">
+        <svg width="340" height="92" viewBox="0 0 380 100" role="img" aria-label="Doremix on ink">
+          <text x="6" y="68" font-family="'Space Grotesk',sans-serif" font-weight="500" font-size="62" letter-spacing="-1.5" fill="#F4F1EA">Doremi</text>
+          <g transform="translate(296,24)" stroke="url(#xGrad)" stroke-width="5.5" stroke-linecap="round" fill="none">
+            <path d="M1 46 C 8 36, 13 19, 23 8 C 27 3, 32 1, 37 1"/>
+            <path d="M1 1 C 8 11, 14 28, 24 38 C 28 43, 33 46, 37 46"/>
+          </g>
+          <!-- clear-space guide -->
+          <rect class="guide" x="2" y="6" width="376" height="80" rx="4"/>
+        </svg>
+      </div>
+      <div style="font-family:var(--font-mono);font-size:10.5px;color:var(--mist);text-align:center;letter-spacing:0.08em;">CLEAR SPACE = CAP-HEIGHT · ALWAYS ON INK</div>
+    </div>
+
+    <!-- on paper -->
+    <div class="panel paper">
+      <div class="label">Wordmark — on paper</div>
+      <div style="display:flex;justify-content:center;padding:30px 0 30px;">
+        <svg width="300" height="80" viewBox="0 0 380 100" role="img" aria-label="Doremix on paper">
+          <text x="6" y="68" font-family="'Space Grotesk',sans-serif" font-weight="500" font-size="62" letter-spacing="-1.5" fill="#0B0B0F">Doremi</text>
+          <g transform="translate(296,24)" stroke="url(#xGrad)" stroke-width="5.5" stroke-linecap="round" fill="none">
+            <path d="M1 46 C 8 36, 13 19, 23 8 C 27 3, 32 1, 37 1"/>
+            <path d="M1 1 C 8 11, 14 28, 24 38 C 28 43, 33 46, 37 46"/>
+          </g>
+        </svg>
+      </div>
+      <div style="font-family:var(--font-mono);font-size:10.5px;color:#6b6862;text-align:center;letter-spacing:0.08em;">INK TEXT · GRADIENT X HOLDS</div>
+    </div>
+  </div>
+
+  <div class="wrap" style="padding-bottom:clamp(40px,6vw,72px);">
+    <div class="construct">
+      <!-- the mark, ink -->
+      <div class="mini">
+        <svg width="92" height="92" viewBox="0 0 92 92" role="img" aria-label="Doremix mark">
+          <defs>
+            <linearGradient id="barGrad" x1="0" y1="1" x2="1" y2="0">
+              <stop offset="0" stop-color="#FF3D81"/>
+              <stop offset="0.5" stop-color="#FF9F1C"/>
+              <stop offset="1" stop-color="#2EC4B6"/>
+            </linearGradient>
+          </defs>
+          <rect x="14" y="55" width="16" height="23" rx="3" fill="url(#barGrad)"/>
+          <rect x="38" y="32" width="16" height="46" rx="3" fill="url(#barGrad)"/>
+          <rect x="62" y="14" width="16" height="64" rx="3" fill="url(#barGrad)"/>
+        </svg>
+        <div class="cap">MARK · 40 / 70 / 100%</div>
+      </div>
+      <!-- the mark, animated (live) -->
+      <div class="mini">
+        <svg width="92" height="92" viewBox="0 0 92 92" role="img" aria-label="Doremix mark, playing">
+          <g class="beatbars">
+            <rect x="14" y="14" width="16" height="64" rx="3" fill="url(#barGrad)"/>
+            <rect x="38" y="14" width="16" height="64" rx="3" fill="url(#barGrad)"/>
+            <rect x="62" y="14" width="16" height="64" rx="3" fill="url(#barGrad)"/>
+          </g>
+        </svg>
+        <div class="cap" style="color:var(--live);">LIVE · BEAT-REACTIVE</div>
+      </div>
+      <!-- the mark on paper -->
+      <div class="mini" style="background:var(--paper);">
+        <svg width="92" height="92" viewBox="0 0 92 92" role="img" aria-label="Doremix mark on paper">
+          <rect x="14" y="55" width="16" height="23" rx="3" fill="url(#barGrad)"/>
+          <rect x="38" y="32" width="16" height="46" rx="3" fill="url(#barGrad)"/>
+          <rect x="62" y="14" width="16" height="64" rx="3" fill="url(#barGrad)"/>
+        </svg>
+        <div class="cap" style="color:#6b6862;">ON PAPER</div>
+      </div>
+      <!-- lineage note -->
+      <div class="mini" style="align-items:flex-start;justify-content:center;text-align:left;gap:10px;">
+        <div class="cap" style="color:var(--energy-2);">LINEAGE</div>
+        <div style="font-size:13px;color:var(--mist);line-height:1.5;">
+          Doremi = <b style="color:var(--paper);font-weight:500">three waves</b>.<br/>
+          Doremix = <b style="color:var(--paper);font-weight:500">three bars</b>.<br/>
+          Same family, own voice.
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =================== 3. COLOR =================== -->
+<section>
+  <div class="wrap sec-head">
+    <div class="eyebrow"><span class="idx">03</span> Color</div>
+    <h2 class="sec">Ink and mist. The spectrum only where energy lives.</h2>
+    <p class="sec-sub">One warm-to-cool energy spectrum carries all the chroma. Everything else is near-black and warm grey, so the curve can sing. One gradient per view, max.</p>
+  </div>
+
+  <div class="wrap color-block">
+    <!-- the gradient bar -->
+    <div class="gradbar">
+      <div class="stops"><span>#FF3D81</span><span>#FF9F1C</span><span>#2EC4B6</span></div>
+    </div>
+    <div class="grad-caption">ENERGY SPECTRUM · <code>linear-gradient(90deg, #FF3D81 0%, #FF9F1C 50%, #2EC4B6 100%)</code> · peak → drive → release</div>
+
+    <!-- swatches -->
+    <div class="swatches">
+      <div class="sw"><div class="chip" style="background:#0B0B0F" ></div><div class="meta"><div class="name">--ink</div><div class="hex">#0B0B0F</div><div class="role">Primary background. Warm near-black.</div></div></div>
+      <div class="sw"><div class="chip bordered" style="background:#14141B"></div><div class="meta"><div class="name">--ink-2</div><div class="hex">#14141B</div><div class="role">Raised surfaces, cards.</div></div></div>
+      <div class="sw"><div class="chip bordered" style="background:#1E1E28"></div><div class="meta"><div class="name">--ink-3</div><div class="hex">#1E1E28</div><div class="role">Borders, deck lanes.</div></div></div>
+      <div class="sw"><div class="chip" style="background:#F4F1EA"></div><div class="meta"><div class="name">--paper</div><div class="hex">#F4F1EA</div><div class="role">Warm off-white text. High contrast on dark.</div></div></div>
+      <div class="sw"><div class="chip" style="background:#A6A3B0"></div><div class="meta"><div class="name">--mist</div><div class="hex">#A6A3B0</div><div class="role">Secondary text, labels.</div></div></div>
+      <div class="sw"><div class="chip" style="background:#FF3D81"></div><div class="meta"><div class="name">--energy-1</div><div class="hex">#FF3D81</div><div class="role">Magenta. High energy / peak.</div></div></div>
+      <div class="sw"><div class="chip" style="background:#FF9F1C"></div><div class="meta"><div class="name">--energy-2</div><div class="hex">#FF9F1C</div><div class="role">Amber. Drive / mid.</div></div></div>
+      <div class="sw"><div class="chip" style="background:#2EC4B6"></div><div class="meta"><div class="name">--energy-3</div><div class="hex">#2EC4B6</div><div class="role">Teal. Cool / release.</div></div></div>
+      <div class="sw"><div class="chip" style="background:#3DFF88"></div><div class="meta"><div class="name">--live</div><div class="hex">#3DFF88</div><div class="role">Live / playing indicator. Sparingly.</div></div></div>
+    </div>
+
+    <div class="ration-note">
+      <span class="k">Chroma is rationed</span>
+      <p>Most of every screen is <b>ink + mist</b>. The gradient appears only on the curve, the primary action, and the play state. Avoid generic AI purple. If two things glow, one is wrong.</p>
+    </div>
+  </div>
+</section>
+
+<!-- =================== 4. TYPOGRAPHY =================== -->
+<section>
+  <div class="wrap sec-head">
+    <div class="eyebrow"><span class="idx">04</span> Typography</div>
+    <h2 class="sec">Three voices: display, body, machine.</h2>
+    <p class="sec-sub">Space Grotesk speaks for the brand, Inter carries the read, JetBrains Mono is the conductor's machine voice — the cue sheet, the BPM, the key.</p>
+  </div>
+
+  <div class="wrap type-block">
+    <!-- Space Grotesk -->
+    <div class="type-fam">
+      <div class="fam-meta">
+        <div class="nm">Space Grotesk</div>
+        <div class="use">DISPLAY / UI / WORDMARK</div>
+        <div class="wts">WEIGHTS · <span>400 500 600 700</span></div>
+      </div>
+      <div>
+        <p class="specimen-display">It builds the energy.<br/><span class="lo">You call the drops.</span></p>
+        <div class="scale-row" style="margin-top:24px;">
+          <span class="s" style="font-size:48px;">Aa<small>DISPLAY 48</small></span>
+          <span class="s" style="font-size:32px;">Aa<small>H2 32</small></span>
+          <span class="s" style="font-size:22px;">Aa<small>H3 22</small></span>
+          <span class="s" style="font-size:15px;">Aa<small>UI 15</small></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Inter -->
+    <div class="type-fam">
+      <div class="fam-meta">
+        <div class="nm" style="font-family:var(--font-body);">Inter</div>
+        <div class="use">BODY / PARAGRAPHS / LABELS</div>
+        <div class="wts">WEIGHTS · <span>400 500 600</span></div>
+      </div>
+      <div>
+        <p class="specimen-body" style="font-size:17px;">A browser-based AI DJ. You bring your music, talk to it in plain language — playlist, audience, energy arc — and it <b>beatmatches a continuous set you can re-steer mid-mix.</b> Local-first. Bring your own key. Open source. The DJ sibling of Doremi.</p>
+      </div>
+    </div>
+
+    <!-- JetBrains Mono -->
+    <div class="type-fam">
+      <div class="fam-meta">
+        <div class="nm" style="font-family:var(--font-mono);font-size:17px;">JetBrains Mono</div>
+        <div class="use">CUE SHEET / BPM / KEY / DEV</div>
+        <div class="wts">WEIGHTS · <span>400 500 600</span></div>
+      </div>
+      <div>
+        <div class="cue">
+<span class="c-dim"># set.cue — exported</span><br/>
+<span class="c-dim">[00:00]</span> deck.a <span class="c-key">8A</span> <span class="c-bpm">124 BPM</span> "Slow Burn"<br/>
+<span class="c-dim">[03:12]</span> transition → blend 32 bars <span class="c-dim">// build</span><br/>
+<span class="c-dim">[03:44]</span> deck.b <span class="c-key">9A</span> <span class="c-bpm">126 BPM</span> "Peak Hour" <span class="c-live">▲ peak</span><br/>
+<span class="c-dim">[07:20]</span> energy <span class="c-cool">release</span> → cool down <span class="c-cool">2EC4B6</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =================== 5. MOTION + VOICE =================== -->
+<section>
+  <div class="wrap sec-head">
+    <div class="eyebrow"><span class="idx">05</span> Motion &amp; Voice</div>
+    <h2 class="sec">Quick, confident, nocturnal.</h2>
+    <p class="sec-sub">Transitions are fast and never bounce. Animation is beat-reactive only when audio plays — never decorative motion that screams template. The copy is founder-direct: short, concrete, no buzzwords.</p>
+  </div>
+
+  <div class="wrap mv-grid">
+    <!-- VOICE -->
+    <div class="panel">
+      <div class="label">Voice — say this, not that</div>
+      <div class="voice-list">
+        <div class="vrow yes"><span class="mk">✓</span><span class="txt">Drag in your tracks. Tell it the vibe. Hit play.</span></div>
+        <div class="vrow yes"><span class="mk">✓</span><span class="txt">It builds the energy, you call the drops.</span></div>
+        <div class="vrow no"><span class="mk">✕</span><span class="txt">Leverage AI to revolutionize your music experience.</span></div>
+        <div class="vrow no"><span class="mk">✕</span><span class="txt">Our revolutionary, game-changing AI ✨ unlocks synergy.</span></div>
+      </div>
+    </div>
+
+    <!-- MOTION -->
+    <div class="panel">
+      <div class="label">Motion — the rules</div>
+      <div class="motion-spec">
+        <div class="mspec"><span class="k">Transition duration</span><span class="v"><b>120–200ms</b></span></div>
+        <div class="mspec"><span class="k">Easing</span><span class="v">cubic-bezier(<b>0.2, 0.8, 0.2, 1</b>)</span></div>
+        <div class="mspec"><span class="k">Idle curve</span><span class="v">slow drift / breathe</span></div>
+        <div class="mspec"><span class="k">Playing</span><span class="v"><b style="color:var(--live)">beat-reactive</b> pulses</span></div>
+        <div class="mspec"><span class="k">Never</span><span class="v">bounce · slow fade · decor-only</span></div>
+      </div>
+      <div class="easing-demo">
+        <div class="cap">cubic-bezier(0.2, 0.8, 0.2, 1) — fast out, settle in</div>
+        <div class="track"><div class="runner"></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =================== 6. UI TEXTURE PREVIEW =================== -->
+<section>
+  <div class="wrap sec-head">
+    <div class="eyebrow"><span class="idx">06</span> Applied — UI Texture</div>
+    <h2 class="sec">The brand is the product: deck, curve, cue sheet.</h2>
+    <p class="sec-sub">Not abstract. Here's a sliver of the live tool — two decks beatmatched, the set energy curve, the cue sheet the conductor emits, and the quick-prompt steer.</p>
+  </div>
+
+  <div class="wrap ui-block">
+    <div class="deck">
+      <div class="deck-bar">
+        <span class="tt">▦ doremix / set</span>
+        <span>warehouse_night.set</span>
+        <span class="spacer"></span>
+        <span>42:18 / 90:00</span>
+        <span class="live"><span class="d"></span>LIVE</span>
+      </div>
+
+      <div class="deck-main">
+        <!-- left: curve + decks -->
+        <div class="deck-curve">
+          <div class="ctitle"><span>SET ENERGY</span><span style="color:var(--energy-2)">PEAK</span></div>
+          <svg viewBox="0 0 560 130" preserveAspectRatio="none" aria-hidden="true">
+            <defs>
+              <linearGradient id="deckStroke" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0" stop-color="#FF3D81"/><stop offset="0.5" stop-color="#FF9F1C"/><stop offset="1" stop-color="#2EC4B6"/>
+              </linearGradient>
+            </defs>
+            <!-- grid ticks -->
+            <g stroke="#1E1E28" stroke-width="1">
+              <line x1="0" y1="32" x2="560" y2="32"/><line x1="0" y1="65" x2="560" y2="65"/><line x1="0" y1="98" x2="560" y2="98"/>
+            </g>
+            <path fill="url(#deckStroke)" opacity="0.12"
+              d="M0 110 C 90 108, 130 78, 200 76 C 270 74, 290 30, 360 28 C 430 26, 470 70, 560 60 L 560 130 L 0 130 Z"/>
+            <path class="e-line" stroke-width="2"
+              d="M0 110 C 90 108, 130 78, 200 76 C 270 74, 290 30, 360 28 C 430 26, 470 70, 560 60"/>
+            <!-- playhead at current position -->
+            <line x1="360" y1="6" x2="360" y2="124" stroke="#3DFF88" stroke-width="1" opacity="0.55"/>
+            <circle class="playhead" cx="360" cy="28" r="4.5" fill="#3DFF88"/>
+          </svg>
+
+          <div class="deck-decks">
+            <div class="dk a">
+              <div class="nm">Slow Burn</div>
+              <div class="ar">A-side — playing</div>
+              <div class="chips"><span class="chip2 bpm">124 BPM</span><span class="chip2 key">8A</span></div>
+              <div class="wf">
+                <i style="height:30%"></i><i style="height:62%"></i><i style="height:45%"></i><i style="height:80%"></i><i style="height:55%"></i><i style="height:90%"></i><i style="height:40%"></i><i style="height:70%"></i><i style="height:52%"></i><i style="height:85%"></i><i style="height:48%"></i><i style="height:66%"></i>
+              </div>
+            </div>
+            <div class="dk b">
+              <div class="nm">Peak Hour</div>
+              <div class="ar">B-side — cued</div>
+              <div class="chips"><span class="chip2 bpm">126 BPM</span><span class="chip2 key">9A</span></div>
+              <div class="wf">
+                <i style="height:50%"></i><i style="height:72%"></i><i style="height:40%"></i><i style="height:88%"></i><i style="height:60%"></i><i style="height:78%"></i><i style="height:46%"></i><i style="height:92%"></i><i style="height:58%"></i><i style="height:70%"></i><i style="height:44%"></i><i style="height:82%"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- right: cue sheet + prompt -->
+        <div class="deck-cue">
+          <div class="ctitle">CUE SHEET</div>
+          <div class="cuesheet">
+            <div class="ln"><span class="tc">38:02</span><span class="ev">deck.a <span class="hi">Slow Burn</span></span></div>
+            <div class="ln"><span class="tc">40:50</span><span class="ev">blend 32 bars</span></div>
+            <div class="ln"><span class="tc on">42:18</span><span class="ev"><span class="pk">▲ peak</span> Peak Hour</span></div>
+            <div class="ln"><span class="tc">46:30</span><span class="ev">filter sweep</span></div>
+            <div class="ln"><span class="tc">51:00</span><span class="ev"><span class="rl">release</span> cool down</span></div>
+          </div>
+
+          <div class="deck-prompt">
+            <span class="qp hot">take it higher</span>
+            <span class="qp">hold the groove</span>
+            <span class="qp">bring it down</span>
+          </div>
+          <div class="deck-input">
+            <span>more melodic, no vocals<span class="cursor" style="display:inline-block;vertical-align:middle;margin-left:1px;"></span></span>
+            <span class="go">steer</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =================== 7. ANTI-SLOP =================== -->
+<section>
+  <div class="wrap sec-head">
+    <div class="eyebrow"><span class="idx">07</span> Anti-slop Guardrails</div>
+    <h2 class="sec">What this brand refuses to be.</h2>
+    <p class="sec-sub">Altitude: Linear, Teenage Engineering, a good Boiler Room site. Restrained, technical, music-first, a little cold. Show the product, never a mascot.</p>
+  </div>
+
+  <div class="wrap slop-block">
+    <div class="slop-grid">
+      <div class="slop"><span class="no">✕</span><div class="t">No glowing neon headphones<span>The cliché DJ hero. We show the curve and the decks.</span></div></div>
+      <div class="slop"><span class="no">✕</span><div class="t">No AI-purple template<span>Generic SaaS gradient-on-black. Our chroma is warm-to-cool, rationed.</span></div></div>
+      <div class="slop"><span class="no">✕</span><div class="t">No stock DJ clip-art<span>No turntable photography, no festival crowd shots.</span></div></div>
+      <div class="slop"><span class="no">✕</span><div class="t">No rounded-blob illustrations<span>No floating gradient bubbles. Geometry, lines, meters.</span></div></div>
+      <div class="slop"><span class="no">✕</span><div class="t">No emoji headings, no ✨<span>The machine voice is mono, not decorated.</span></div></div>
+      <div class="slop"><span class="no">✕</span><div class="t">No mascot or persona name<span>The AI is just "Doremix" — or "the conductor" in docs.</span></div></div>
+      <div class="slop"><span class="no">✕</span><div class="t">No two glows per view<span>One gradient, one play state. If two things shine, one is wrong.</span></div></div>
+      <div class="slop"><span class="no">✕</span><div class="t">No "revolutionary" copy<span>No buzzwords, no em-dash slop, no enterprise SaaS tone.</span></div></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap" style="width:100%;">
+    <div class="energy-rule"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap;">
+      <span>DOREMIX · BROWSER AI DJ · THE DJ SIBLING OF DOREMI</span>
+      <span>BRAND.md = SOURCE OF TRUTH · v1</span>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,92 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    @apply bg-ink text-paper font-body antialiased;
+    margin: 0;
+    /* faint warm grain so the near-black canvas isn't flat */
+    background-image: radial-gradient(
+      120% 120% at 50% -10%,
+      rgba(255, 159, 28, 0.04) 0%,
+      rgba(11, 11, 15, 0) 55%
+    );
+    background-attachment: fixed;
+  }
+
+  ::selection {
+    background: rgba(255, 61, 129, 0.3);
+    color: #f4f1ea;
+  }
+
+  /* Range input — energy-tinted, rationed chroma */
+  input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 2px;
+    background: #1e1e28;
+    border-radius: 9999px;
+    cursor: pointer;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 9999px;
+    background: #f4f1ea;
+    border: 2px solid #0b0b0f;
+    box-shadow: 0 0 0 1px #2ec4b6;
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    border-radius: 9999px;
+    background: #f4f1ea;
+    border: 2px solid #0b0b0f;
+    box-shadow: 0 0 0 1px #2ec4b6;
+  }
+
+  /* Slim scrollbars for the machine panels */
+  .scroll-thin {
+    scrollbar-width: thin;
+    scrollbar-color: #1e1e28 transparent;
+  }
+  .scroll-thin::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  .scroll-thin::-webkit-scrollbar-thumb {
+    background: #1e1e28;
+    border-radius: 9999px;
+  }
+}
+
+@layer components {
+  .text-gradient {
+    @apply bg-energy bg-clip-text text-transparent;
+  }
+
+  .chip {
+    @apply inline-flex items-center gap-1.5 rounded-full border border-ink-3 bg-ink-2 px-2.5 py-1 font-mono text-[11px] uppercase tracking-wide text-mist;
+  }
+
+  .panel {
+    @apply rounded-xl border border-ink-3 bg-ink-2;
+  }
+
+  .btn-ghost {
+    @apply rounded-lg border border-ink-3 bg-ink-2 px-3 py-2 font-display text-sm text-paper transition-colors duration-150 ease-confident hover:border-mist/50 hover:bg-ink-3;
+  }
+}

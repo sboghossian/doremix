@@ -1,0 +1,20 @@
+{
+  "name": "doremix",
+  "version": "0.0.1",
+  "private": true,
+  "description": "An AI DJ that conducts a live, editable mix of your own tracks.",
+  "license": "MIT",
+  "author": "Stephane Boghossian",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sboghossian/doremix"
+  },
+  "packageManager": "pnpm@10.33.0",
+  "scripts": {
+    "dev": "pnpm --filter @doremix/app dev",
+    "build": "pnpm --filter @doremix/app build",
+    "preview": "pnpm --filter @doremix/app preview",
+    "typecheck": "pnpm -r exec tsc --noEmit"
+  },
+  "keywords": ["ai-dj", "web-audio", "beatmatching", "llm", "music", "local-first", "openrouter"]
+}

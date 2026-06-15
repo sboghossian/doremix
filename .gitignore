@@ -1,0 +1,33 @@
+# deps
+node_modules/
+.pnpm-store/
+
+# builds
+dist/
+build/
+.vite/
+*.tsbuildinfo
+
+# env / secrets (BYO keys never get committed)
+.env
+.env.*
+!.env.example
+
+# os / editor
+.DS_Store
+*.log
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# local audio test material (never commit tracks)
+*.mp3
+*.wav
+*.flac
+*.m4a
+*.aiff
+*.ogg
+/test-tracks/
+/apps/app/public/demo-audio/*
+!/apps/app/public/demo-audio/.gitkeep
+.gstack/
