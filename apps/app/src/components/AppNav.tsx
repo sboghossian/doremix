@@ -2,38 +2,25 @@ import { NavLink } from "react-router-dom";
 import { Wordmark } from "./Wordmark";
 import { useSession } from "@/store/SessionContext";
 
-const linkBase =
-  "font-display text-sm px-3 py-1.5 rounded-lg transition-colors duration-150 ease-confident";
-
+/**
+ * The top bar. v2 is a project tool, not a 3-tab flow — so the nav is just the
+ * wordmark (→ Your sets) plus a live/idle status pill.
+ */
 export function AppNav() {
   const { isPlaying, report } = useSession();
   return (
-    <header className="sticky top-0 z-20 border-b border-ink-3 bg-ink/80 backdrop-blur-md">
-      <div className="mx-auto flex h-14 max-w-[1400px] items-center justify-between px-5">
+    <header className="sticky top-0 z-20 border-b border-white/10 bg-ink/60 backdrop-blur-xl">
+      <div className="mx-auto flex h-14 max-w-[1480px] items-center justify-between px-5">
         <NavLink to="/" className="shrink-0">
-          <Wordmark className="text-base" />
+          <Wordmark className="text-base" live={isPlaying} />
         </NavLink>
 
-        <nav className="flex items-center gap-1">
-          {[
-            { to: "/", label: "Library", end: true },
-            { to: "/brief", label: "Brief", end: false },
-            { to: "/booth", label: "Booth", end: false },
-          ].map((l) => (
-            <NavLink
-              key={l.to}
-              to={l.to}
-              end={l.end}
-              className={({ isActive }) =>
-                `${linkBase} ${
-                  isActive ? "bg-ink-2 text-paper" : "text-mist hover:text-paper"
-                }`
-              }
-            >
-              {l.label}
-            </NavLink>
-          ))}
-        </nav>
+        <NavLink
+          to="/"
+          className="font-display text-sm text-mist transition-colors hover:text-paper"
+        >
+          Your sets
+        </NavLink>
 
         <div className="flex w-[120px] items-center justify-end gap-2">
           {isPlaying ? (

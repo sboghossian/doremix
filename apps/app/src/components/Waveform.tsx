@@ -54,9 +54,10 @@ export function Waveform({
     >
       <defs>
         <linearGradient id={`wf-${seed}`} x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0%" stopColor="#FF3D81" />
-          <stop offset="50%" stopColor="#FF9F1C" />
-          <stop offset="100%" stopColor="#2EC4B6" />
+          <stop offset="0%" stopColor="#FF2E97" />
+          <stop offset="33%" stopColor="#FFB627" />
+          <stop offset="66%" stopColor="#2EE6C4" />
+          <stop offset="100%" stopColor="#9B5CFF" />
         </linearGradient>
       </defs>
       {peaks.map((p, i) => {
@@ -70,7 +71,13 @@ export function Waveform({
             width={barW}
             height={bh}
             rx={1}
-            fill={played && active ? `url(#wf-${seed})` : played ? "#5b5866" : "#2A2A36"}
+            fill={
+              played && active
+                ? `url(#wf-${seed})`
+                : played
+                  ? "rgba(255,255,255,0.45)"
+                  : "rgba(255,255,255,0.12)"
+            }
             opacity={played ? 1 : 0.7}
           />
         );

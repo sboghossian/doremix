@@ -84,6 +84,12 @@ export class MockEngine implements Engine {
 
   pause(): void {
     this.playing = false;
+    // stop the simulation clock so a paused/closed set doesn't keep emitting
+    // stale reports over a freshly-opened (still-composing) set.
+    if (this.timer) {
+      clearInterval(this.timer);
+      this.timer = null;
+    }
     this.emit();
   }
 

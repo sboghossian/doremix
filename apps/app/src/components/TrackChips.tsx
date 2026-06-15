@@ -16,9 +16,9 @@ export function EnergyChip({ energy }: { energy: number }) {
   const pct = Math.round(energy * 100);
   return (
     <span className="chip gap-2">
-      <span className="relative inline-block h-1 w-10 overflow-hidden rounded-full bg-ink-3">
+      <span className="relative inline-block h-1 w-10 overflow-hidden rounded-full bg-white/10">
         <span
-          className="absolute inset-y-0 left-0 rounded-full bg-energy"
+          className="absolute inset-y-0 left-0 rounded-full bg-spectrum"
           style={{ width: `${pct}%` }}
         />
       </span>

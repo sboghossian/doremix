@@ -1,13 +1,13 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { useSession } from "@/store/SessionContext";
 import {
-  DEFAULT_RULES,
   type AudiencePreset,
-  type Brief as BriefT,
+  type Brief,
+  type DoremixSet,
   type EnergyArc,
   type SetRules,
 } from "@/types";
+import { arcSamples } from "@/lib/arc";
 
 const AUDIENCES: { id: AudiencePreset; label: string }[] = [
   { id: "sunset_rooftop", label: "Sunset rooftop" },
@@ -31,80 +31,75 @@ const RULE_DEFS: { key: keyof SetRules; label: string }[] = [
   { key: "longBlends", label: "Long blends (16 bars)" },
 ];
 
-/** Sketch of the selected arc — a tiny gradient curve preview. */
+/** Mini arc preview — gradient spectrum line for the picker. */
 function ArcPreview({ arc }: { arc: EnergyArc }) {
-  const pts: number[] = [];
-  for (let i = 0; i <= 24; i += 1) {
-    const t = i / 24;
-    let e = 0.5;
-    if (arc === "rising") e = 0.3 + 0.6 * t;
-    else if (arc === "wave") e = 0.5 + 0.32 * Math.sin(t * Math.PI * 2 - Math.PI / 2);
-    else e = t < 0.55 ? 0.32 + 0.45 * (t / 0.55) : t < 0.8 ? 0.8 : 0.95 - 0.5 * ((t - 0.8) / 0.2);
-    pts.push(Math.max(0.05, Math.min(1, e)));
-  }
+  const pts = arcSamples(arc, 24);
   const d = pts
     .map((e, i) => `${i === 0 ? "M" : "L"} ${(i / 24) * 100} ${(1 - e) * 40 + 2}`)
     .join(" ");
   return (
     <svg viewBox="0 0 100 44" preserveAspectRatio="none" className="h-10 w-full">
       <defs>
-        <linearGradient id="arc-prev" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0%" stopColor="#FF3D81" />
-          <stop offset="50%" stopColor="#FF9F1C" />
-          <stop offset="100%" stopColor="#2EC4B6" />
+        <linearGradient id={`arc-prev-${arc}`} x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stopColor="#FF2E97" />
+          <stop offset="50%" stopColor="#FFB627" />
+          <stop offset="100%" stopColor="#2EA8FF" />
         </linearGradient>
       </defs>
-      <path d={d} fill="none" stroke="url(#arc-prev)" strokeWidth={2} />
+      <path d={d} fill="none" stroke={`url(#arc-prev-${arc})`} strokeWidth={2.4} />
     </svg>
   );
 }
 
-export function Brief() {
-  const { conduct, library } = useSession();
-  const navigate = useNavigate();
+/**
+ * The compose state — vibe chat front and center to describe the night, with
+ * structured chips (length, audience, arc, rules). "Spin it" → MockConductor
+ * plans the set and it goes live in the same workspace view.
+ */
+export function Compose({ set }: { set: DoremixSet }) {
+  const { updateBrief, spin, library } = useSession();
+  const [text, setText] = useState(set.brief.text);
+  const [lengthMin, setLengthMin] = useState(set.brief.lengthMin);
+  const [audience, setAudience] = useState<AudiencePreset>(set.brief.audience);
+  const [arc, setArc] = useState<EnergyArc>(set.brief.arc);
+  const [rules, setRules] = useState<SetRules>(set.brief.rules);
 
-  const [text, setText] = useState("");
-  const [lengthMin, setLengthMin] = useState(40);
-  const [audience, setAudience] = useState<AudiencePreset>("sunset_rooftop");
-  const [arc, setArc] = useState<EnergyArc>("plateau_peak");
-  const [rules, setRules] = useState<SetRules>(DEFAULT_RULES);
+  const crateCount = library.filter((t) => set.crate.includes(t.id)).length;
 
   function toggleRule(key: keyof SetRules) {
     setRules((r) => ({ ...r, [key]: !r[key] }));
   }
 
-  function onConduct() {
-    const brief: BriefT = { text, lengthMin, audience, arc, rules };
-    conduct(brief);
-    navigate("/booth");
+  function spinIt() {
+    const brief: Brief = { text, lengthMin, audience, arc, rules };
+    updateBrief(set.id, brief);
+    spin(set.id, brief);
   }
 
-  const analyzed = library.filter((t) => t.analyzed).length;
-
   return (
-    <div className="mx-auto max-w-[900px] px-5 py-8">
-      <h1 className="font-display text-3xl font-semibold tracking-tightish">
-        Compose the set
+    <div className="mx-auto max-w-[860px]">
+      <h1 className="font-display text-3xl font-bold tracking-tightish text-spectrum md:text-4xl">
+        Describe the night
       </h1>
-      <p className="mt-1 font-body text-sm text-mist">
-        Talk to it like you'd brief a DJ. {analyzed} tracks ready to draw from.
+      <p className="mt-2 font-body text-sm text-mist">
+        Talk to it like you'd brief a DJ. {crateCount} tracks in this set's crate.
       </p>
 
-      {/* Chat-style description */}
-      <div className="mt-6 panel p-5">
+      {/* vibe chat — the front-and-center text box */}
+      <div className="glass mt-6 p-5 shadow-glow-violet">
         <label className="mb-2 block font-mono text-[11px] uppercase tracking-wide text-mist">
-          Describe the vibe
+          The vibe
         </label>
         <textarea
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder="40-min sunset rooftop, build slow, no vocals after the peak"
-          className="h-24 w-full resize-none rounded-lg border border-ink-3 bg-ink p-3 font-body text-sm text-paper outline-none focus:border-mist/40 scroll-thin"
+          className="h-24 w-full resize-none rounded-glass border border-white/12 bg-black/30 p-3 font-body text-base text-paper outline-none focus:border-cyan/50 scroll-thin"
         />
       </div>
 
-      {/* Length */}
-      <div className="mt-4 panel p-5">
+      {/* length */}
+      <div className="glass mt-4 p-5">
         <div className="mb-2 flex items-center justify-between">
           <label className="font-mono text-[11px] uppercase tracking-wide text-mist">
             Set length
@@ -126,8 +121,8 @@ export function Brief() {
         </div>
       </div>
 
-      {/* Audience presets */}
-      <div className="mt-4 panel p-5">
+      {/* audience */}
+      <div className="glass mt-4 p-5">
         <label className="mb-3 block font-mono text-[11px] uppercase tracking-wide text-mist">
           Audience
         </label>
@@ -136,10 +131,10 @@ export function Brief() {
             <button
               key={a.id}
               onClick={() => setAudience(a.id)}
-              className={`rounded-full px-3 py-1.5 font-display text-sm transition-colors duration-150 ease-confident ${
+              className={`rounded-full px-3 py-1.5 font-display text-sm transition-all duration-150 ease-confident ${
                 audience === a.id
-                  ? "bg-paper text-ink"
-                  : "border border-ink-3 bg-ink-2 text-mist hover:text-paper"
+                  ? "bg-spectrum bg-[length:200%_auto] text-ink shadow-glow-cyan animate-gradient-pan"
+                  : "border border-white/12 bg-white/5 text-mist hover:text-paper"
               }`}
             >
               {a.label}
@@ -148,8 +143,8 @@ export function Brief() {
         </div>
       </div>
 
-      {/* Energy arc */}
-      <div className="mt-4 panel p-5">
+      {/* energy arc */}
+      <div className="glass mt-4 p-5">
         <label className="mb-3 block font-mono text-[11px] uppercase tracking-wide text-mist">
           Energy arc
         </label>
@@ -158,10 +153,10 @@ export function Brief() {
             <button
               key={a.id}
               onClick={() => setArc(a.id)}
-              className={`rounded-lg border p-3 text-left transition-colors duration-150 ease-confident ${
+              className={`rounded-glass border p-3 text-left transition-all duration-150 ease-confident ${
                 arc === a.id
-                  ? "border-energy2 bg-ink-2"
-                  : "border-ink-3 bg-ink-2/40 hover:border-mist/40"
+                  ? "border-cyan/60 bg-white/8 shadow-glow-cyan"
+                  : "border-white/10 bg-white/[0.03] hover:border-white/25"
               }`}
             >
               <ArcPreview arc={a.id} />
@@ -172,8 +167,8 @@ export function Brief() {
         </div>
       </div>
 
-      {/* Rules */}
-      <div className="mt-4 panel p-5">
+      {/* rules */}
+      <div className="glass mt-4 p-5">
         <label className="mb-3 block font-mono text-[11px] uppercase tracking-wide text-mist">
           Rules
         </label>
@@ -184,12 +179,12 @@ export function Brief() {
               <button
                 key={r.key}
                 onClick={() => toggleRule(r.key)}
-                className="flex items-center justify-between rounded-lg border border-ink-3 bg-ink-2/40 px-3 py-2.5 text-left transition-colors duration-150 hover:bg-ink-2"
+                className="flex items-center justify-between rounded-glass border border-white/10 bg-white/[0.03] px-3 py-2.5 text-left transition-colors duration-150 hover:bg-white/8"
               >
                 <span className="font-body text-sm text-paper">{r.label}</span>
                 <span
                   className={`relative h-5 w-9 rounded-full transition-colors duration-150 ${
-                    on ? "bg-energy3" : "bg-ink-3"
+                    on ? "bg-teal" : "bg-white/15"
                   }`}
                 >
                   <span
@@ -204,16 +199,13 @@ export function Brief() {
         </div>
       </div>
 
-      <div className="mt-6 flex items-center justify-between">
-        <button onClick={() => navigate("/")} className="btn-ghost text-sm">
-          Back to library
-        </button>
+      <div className="mt-6 flex justify-end">
         <button
-          onClick={onConduct}
-          disabled={analyzed === 0}
-          className="rounded-lg bg-energy px-6 py-3 font-display text-base font-semibold text-ink transition-transform duration-150 ease-confident hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-40"
+          onClick={spinIt}
+          disabled={crateCount === 0}
+          className="btn-spectrum px-8 py-3 text-base"
         >
-          Conduct
+          Spin it
         </button>
       </div>
     </div>

@@ -9,6 +9,7 @@ interface ExportModalProps {
 
 type Phase = "idle" | "rendering" | "done";
 
+/** Render inside the set: real cue-sheet JSON download + disabled WAV stub. */
 export function ExportModal({ sheet, open, onClose }: ExportModalProps) {
   const [phase, setPhase] = useState<Phase>("idle");
   const [pct, setPct] = useState(0);
@@ -52,15 +53,12 @@ export function ExportModal({ sheet, open, onClose }: ExportModalProps) {
 
   return (
     <div
-      className="fixed inset-0 z-40 flex items-center justify-center bg-ink/80 p-4 backdrop-blur-sm animate-fade-in"
+      className="fixed inset-0 z-40 flex items-center justify-center bg-ink/80 p-4 backdrop-blur-md animate-fade-in"
       onClick={onClose}
     >
-      <div
-        className="panel w-full max-w-md p-6"
-        onClick={(e) => e.stopPropagation()}
-      >
+      <div className="glass w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
         <div className="mb-1 flex items-center justify-between">
-          <h2 className="font-display text-xl font-semibold tracking-tightish">
+          <h2 className="font-display text-xl font-bold tracking-tightish text-spectrum">
             Render set
           </h2>
           <button onClick={onClose} className="font-mono text-xs text-mist hover:text-paper">
@@ -73,25 +71,20 @@ export function ExportModal({ sheet, open, onClose }: ExportModalProps) {
         </p>
 
         {phase === "idle" && (
-          <button
-            onClick={() => setPhase("rendering")}
-            className="w-full rounded-lg bg-energy py-3 font-display text-base font-semibold text-ink transition-transform duration-150 ease-confident hover:scale-[1.01]"
-          >
+          <button onClick={() => setPhase("rendering")} className="btn-spectrum w-full py-3 text-base">
             Render
           </button>
         )}
 
         {phase === "rendering" && (
           <div>
-            <div className="mb-2 h-2 overflow-hidden rounded-full bg-ink-3">
+            <div className="mb-2 h-2 overflow-hidden rounded-full bg-white/10">
               <div
-                className="h-full bg-energy"
+                className="h-full bg-spectrum"
                 style={{ width: `${pct}%`, transition: "width 120ms linear" }}
               />
             </div>
-            <p className="font-mono text-[11px] text-mist">
-              bouncing… {Math.round(pct)}%
-            </p>
+            <p className="font-mono text-[11px] text-mist">bouncing… {Math.round(pct)}%</p>
           </div>
         )}
 
@@ -101,22 +94,19 @@ export function ExportModal({ sheet, open, onClose }: ExportModalProps) {
               <span className="h-1.5 w-1.5 rounded-full bg-live" /> render complete
             </p>
             <div className="flex flex-col gap-2">
-              <button
-                onClick={downloadCueSheet}
-                className="w-full rounded-lg bg-energy py-2.5 font-display text-sm font-semibold text-ink"
-              >
+              <button onClick={downloadCueSheet} className="btn-spectrum w-full py-2.5 text-sm">
                 Download cue sheet (.json)
               </button>
               <button
                 disabled
                 title="WAV bounce is wired to the real engine in v0 — stubbed in this prototype"
-                className="w-full cursor-not-allowed rounded-lg border border-ink-3 bg-ink-2 py-2.5 font-display text-sm text-mist/60"
+                className="w-full cursor-not-allowed rounded-glass border border-white/10 bg-white/5 py-2.5 font-display text-sm text-mist/60"
               >
                 Download set.wav — needs real engine
               </button>
               <p className="mt-1 font-body text-[11px] text-mist/70">
-                The cue sheet is the real, reloadable contract. The WAV bounce arrives when the
-                Web Audio engine replaces the mock.
+                The cue sheet is the real, reloadable contract. The WAV bounce arrives when
+                the Web Audio engine replaces the mock.
               </p>
             </div>
           </div>

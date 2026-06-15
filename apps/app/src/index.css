@@ -16,77 +16,151 @@
   body {
     @apply bg-ink text-paper font-body antialiased;
     margin: 0;
-    /* faint warm grain so the near-black canvas isn't flat */
-    background-image: radial-gradient(
-      120% 120% at 50% -10%,
-      rgba(255, 159, 28, 0.04) 0%,
-      rgba(11, 11, 15, 0) 55%
-    );
-    background-attachment: fixed;
+    /* deep blue-black techy base; the moving light comes from the mesh layer */
+    background-color: #0a0a12;
   }
 
   ::selection {
-    background: rgba(255, 61, 129, 0.3);
-    color: #f4f1ea;
+    background: rgba(255, 46, 151, 0.35);
+    color: #f6f4ff;
   }
 
-  /* Range input — energy-tinted, rationed chroma */
+  /* Range input — spectrum-tinted thumb */
   input[type="range"] {
     -webkit-appearance: none;
     appearance: none;
-    height: 2px;
-    background: #1e1e28;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.08);
     border-radius: 9999px;
     cursor: pointer;
   }
   input[type="range"]::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
-    width: 14px;
-    height: 14px;
+    width: 16px;
+    height: 16px;
     border-radius: 9999px;
-    background: #f4f1ea;
-    border: 2px solid #0b0b0f;
-    box-shadow: 0 0 0 1px #2ec4b6;
+    background: #f6f4ff;
+    border: 2px solid #0a0a12;
+    box-shadow: 0 0 12px rgba(255, 46, 151, 0.7);
   }
   input[type="range"]::-moz-range-thumb {
-    width: 14px;
-    height: 14px;
+    width: 16px;
+    height: 16px;
     border-radius: 9999px;
-    background: #f4f1ea;
-    border: 2px solid #0b0b0f;
-    box-shadow: 0 0 0 1px #2ec4b6;
+    background: #f6f4ff;
+    border: 2px solid #0a0a12;
+    box-shadow: 0 0 12px rgba(255, 46, 151, 0.7);
   }
 
   /* Slim scrollbars for the machine panels */
   .scroll-thin {
     scrollbar-width: thin;
-    scrollbar-color: #1e1e28 transparent;
+    scrollbar-color: rgba(255, 255, 255, 0.14) transparent;
   }
   .scroll-thin::-webkit-scrollbar {
     width: 8px;
     height: 8px;
   }
   .scroll-thin::-webkit-scrollbar-thumb {
-    background: #1e1e28;
+    background: rgba(255, 255, 255, 0.14);
     border-radius: 9999px;
   }
 }
 
 @layer components {
-  .text-gradient {
-    @apply bg-energy bg-clip-text text-transparent;
+  /* Big bold gradient-filled headings + wordmark accent */
+  .text-spectrum {
+    background-image: linear-gradient(
+      120deg,
+      #ff2e97,
+      #ff6b3d,
+      #ffb627,
+      #2ee6c4,
+      #2ea8ff,
+      #9b5cff
+    );
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    @apply animate-gradient-pan;
   }
 
+  /* Glassmorphism card — frosted, hairline border, rounded */
+  .glass {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 20px;
+    -webkit-backdrop-filter: blur(16px);
+    backdrop-filter: blur(16px);
+    box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
+  }
+
+  /* Metadata chip — JetBrains Mono machine voice */
   .chip {
-    @apply inline-flex items-center gap-1.5 rounded-full border border-ink-3 bg-ink-2 px-2.5 py-1 font-mono text-[11px] uppercase tracking-wide text-mist;
+    @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-mono text-[11px] uppercase tracking-wide text-mist;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
   }
 
-  .panel {
-    @apply rounded-xl border border-ink-3 bg-ink-2;
+  /* Primary spectrum CTA */
+  .btn-spectrum {
+    @apply inline-flex items-center justify-center rounded-glass px-5 py-2.5 font-display text-sm font-semibold text-ink transition-transform duration-200 ease-confident;
+    background-image: linear-gradient(
+      120deg,
+      #ff2e97,
+      #ff6b3d,
+      #ffb627,
+      #2ee6c4,
+      #2ea8ff,
+      #9b5cff
+    );
+    background-size: 200% auto;
+    box-shadow: 0 0 32px rgba(255, 46, 151, 0.32);
+  }
+  .btn-spectrum:hover {
+    transform: scale(1.02);
+    background-position: right center;
+  }
+  .btn-spectrum:disabled {
+    cursor: not-allowed;
+    opacity: 0.4;
+    transform: none;
+    box-shadow: none;
   }
 
+  /* Ghost / glassy secondary button */
   .btn-ghost {
-    @apply rounded-lg border border-ink-3 bg-ink-2 px-3 py-2 font-display text-sm text-paper transition-colors duration-150 ease-confident hover:border-mist/50 hover:bg-ink-3;
+    @apply rounded-glass px-3 py-2 font-display text-sm text-paper transition-colors duration-150 ease-confident;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+  }
+  .btn-ghost:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.22);
+  }
+}
+
+@layer utilities {
+  /* Subtle film grain overlay (data-uri noise) */
+  .grain::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.04;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+}
+
+/* Respect prefers-reduced-motion: freeze the alive motion, keep state changes */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
   }
 }

@@ -1,76 +1,85 @@
-# Doremix — Brand System
+# Doremix — Brand System (v2: vibe-DJing, vivid, techy)
 
-> The DJ sibling of [Doremi](https://github.com/sboghossian/doremi). Talk to your DJ; it spins the night.
+> Vibe DJing. The DJ sibling of [Doremi](https://github.com/sboghossian/doremi). You don't beatmatch — you describe the night and it spins it, live.
 
-This file is the single source of truth for Doremix's identity. Landing page, app UI, moodboard, and prototype all read from these tokens. Don't diverge.
+Single source of truth for Doremix's identity. Landing, app, moodboard, prototype all pull from these tokens. v2 deliberately turns the color and energy UP — Lovable-flavored, colorful, techy, alive — while staying crafted (vivid, not slop).
 
 ---
 
-## 1. Positioning
+## 1. Positioning — "Vibe DJing"
 
-- **One-liner:** *Describe the vibe. Doremix conducts a live, editable mix of your own tracks.*
-- **What it is:** A browser-based AI DJ. You bring your music, talk to it in plain language (playlist + audience + energy arc), and it beatmatches a continuous set you can re-steer mid-mix. BYO LLM key. Local-first. Open source.
-- **Why it's different:** Spotify's AI DJ talks but doesn't beatmatch. djay/Serato beatmatch but have no conductor. Doremix is the missing square: an LLM **conductor** over **real beatmatched mixing** of **tracks you own**, steerable live.
-- **Audience (layered, one surface):** music-lovers first (drag in tracks, just talk), pro DJs (harmonic mixing + export), developers (hackable cue-sheet JSON + BYO-key OSS).
+- **The frame:** vibe coding let anyone build by describing it. **Doremix is vibe DJing** — anyone runs a real, beatmatched, continuous set by describing the vibe and steering it live.
+- **One-liner:** *Vibe your set. Describe the night, Doremix spins it — beatmatched, live, your own tracks.*
+- **Taglines (pick by surface):** "Vibe your set." · "Vibe DJing, for real." · "Describe the night. It spins it."
+- **What it is:** a browser AI DJ. Bring your music, talk to it in plain language, it conducts a live mix you can re-steer mid-set. BYO LLM key. Local-first. Open source.
+- **Why it's different:** Spotify's AI DJ talks but doesn't beatmatch; djay/Serato beatmatch but have no conductor. Doremix is the missing square: an LLM **conductor** over **real beatmatching** of **tracks you own**, steerable live.
+- **Audience (one surface, layered):** music-lovers first (just vibe it), pro DJs (harmonic mixing + export), devs (hackable cue-sheet JSON + BYO key).
 
-## 2. Voice
+## 2. Product structure — 1 session = 1 project
 
-Founder-direct. Short sentences. Concrete. No buzzwords, no "revolutionary," no em-dash slop, no emoji in product copy. Confident, a little nocturnal. It's a club tool, not an enterprise SaaS.
+Like a vibe-coding tool. Not three tabs — a **project model**:
 
-- ✅ "Drag in your tracks. Tell it the vibe. Hit play."
-- ✅ "It builds the energy, you call the drops."
-- ❌ "Leverage AI to revolutionize your music experience."
+- **Home = "Your sets."** A vivid dashboard of saved sets (projects). Each card: name, vibe line, length, BPM range, and a mini energy-curve thumbnail. Big "New set" / "Start vibing" CTA. Empty state = drop your music, start your first set.
+- **A set = one living canvas.** Open a set → a single workspace that fuses the **vibe chat** (you describe + steer, the conductor replies), the **live booth** (energy curve, decks, transitions playing), the **crate** (this set's tracks), the **cue sheet**, and the **mic energy** — all in one project view. You name it, it persists, you return and iterate. That's the "1 session = 1 project" model.
+- Export lives inside the set.
 
-## 3. The core visual idea: the energy curve
+## 3. The core motif: the energy curve, lit up
 
-The product's central concept is the **energy arc** of a set — it rises, peaks, releases. That curve **is** the brand. A single living line/spectrum that climbs and falls is the recurring motif: in the logo, the loader, the section dividers, the live UI. Everything else is quiet so the curve can sing.
+The energy arc of a set (rises, peaks, releases) is still the hero. In v2 it's rendered as a **glowing, animated, spectrum-lit line** — the club-lights of the brand. It pulses on the beat when playing.
 
-## 4. Color
+## 4. Color — vivid club-light spectrum (turn it UP)
 
-Dark canvas, one warm-to-cool **energy spectrum** as the only chroma. Avoid generic "AI purple."
+Dark glassy canvas, but ALIVE with color. Chroma is no longer rationed — it's the point. Think Lovable's gradient energy + club lighting.
 
 | Token | Hex | Use |
 |---|---|---|
-| `--ink` | `#0B0B0F` | Primary background (warm near-black) |
-| `--ink-2` | `#14141B` | Raised surfaces, cards |
-| `--ink-3` | `#1E1E28` | Borders, deck lanes |
-| `--paper` | `#F4F1EA` | Light-mode / text-on-dark high contrast (warm off-white, Doremi family) |
-| `--mist` | `#A6A3B0` | Secondary text |
-| `--energy-1` | `#FF3D81` | Spectrum start — magenta (high energy / peak) |
-| `--energy-2` | `#FF9F1C` | Spectrum mid — amber (drive) |
-| `--energy-3` | `#2EC4B6` | Spectrum end — teal (cool / release) |
-| `--live` | `#3DFF88` | "Live" / recording / playing indicator only |
+| `--ink` | `#0A0A12` | Background (deep blue-black, techy) |
+| `--ink-2` | `#10101C` | Raised base behind glass |
+| `--glass` | `rgba(255,255,255,0.06)` | Frosted card fill (with `backdrop-blur: 16px`) |
+| `--glass-border` | `rgba(255,255,255,0.12)` | Card hairline |
+| `--paper` | `#F6F4FF` | High-contrast text on dark |
+| `--mist` | `#B4B0CC` | Secondary text |
+| `--live` | `#3DFF88` | Playing / live / recording only |
 
-**The energy gradient** (use for the curve, key CTAs, the wordmark accent):
-`linear-gradient(90deg, #FF3D81 0%, #FF9F1C 50%, #2EC4B6 100%)`
+**The spectrum** (6 stops — the club lights, used boldly):
+```
+--c-magenta #FF2E97   --c-coral #FF6B3D   --c-amber #FFB627
+--c-teal    #2EE6C4   --c-cyan  #2EA8FF   --c-violet #9B5CFF
+```
+**Signature gradient** (hero curve, wordmark, primary CTAs, glows):
+`linear-gradient(120deg, #FF2E97, #FF6B3D, #FFB627, #2EE6C4, #2EA8FF, #9B5CFF)`
+Animate it (slow hue drift / position shift) so it feels alive.
 
-Rule: chroma is rationed. Most of the screen is ink + mist. The gradient appears where energy lives (the curve, play state, the primary action). One gradient per view, max.
+Surfaces stay dark + glassy; **color comes from gradient, glow, and an animated gradient-mesh background** (soft blurred blobs of magenta/cyan/violet drifting behind glass). It should feel like a dark room full of moving light.
 
-## 5. Type
+## 5. Visual language — Lovable-flavored, techy
 
-- **Display / UI:** `Space Grotesk` (headings, wordmark, buttons) — geometric, a little quirky, club-modern.
-- **Body:** `Inter` (paragraphs, labels).
-- **Mono / technical:** `JetBrains Mono` (the cue-sheet, BPM/key chips, code, dev surfaces) — the "machine voice" of the conductor.
+- **Glassmorphism:** frosted cards (`backdrop-filter: blur(16px)`, `--glass` fill, 1px `--glass-border`, soft inner highlight). Generous radius (16–24px) — friendly/rounded, not boxy.
+- **Glow:** colored, soft `box-shadow`/`drop-shadow` on the curve, the playing deck, primary buttons (e.g. `0 0 40px rgba(255,46,151,.35)`). Restraint = one or two glows per view, not everything.
+- **Gradient mesh background:** 2–4 large blurred gradient blobs drifting slowly behind the glass = the room's lights. Plus subtle film grain on top.
+- **Big bold type:** gradient-filled display headlines, heavy weight, tight tracking. Confident and playful.
+- **Motion:** animated gradients, beat-reactive glow when playing, smooth springy transitions (160–240ms, `cubic-bezier(0.2,0.8,0.2,1)`), tasteful parallax/scroll-reveal. Lively but never seizure-y; respect `prefers-reduced-motion`.
 
-Load from Google Fonts (or self-host for the app). Headings: tight tracking (`-0.02em`), weight 500–700. Mono is used deliberately to signal "this is the machine talking" (cue sheet, track metadata).
+## 6. Type
 
-## 6. Logo / wordmark
+- **Display / UI:** `Space Grotesk` (headings, wordmark, buttons) — heavy weights, tight tracking, gradient-fill on hero headlines.
+- **Body:** `Inter`.
+- **Mono / machine:** `JetBrains Mono` (cue sheet, BPM/key chips, code) — the conductor's machine voice.
 
-- **Wordmark:** `Doremix` in Space Grotesk Medium. The **`x`** is rendered as a **crossfade** — two short waveform strokes crossing (one fading out, one fading in), the literal DJ blend. Subtle energy-gradient on the `x` only.
-- **Mark (standalone):** three rising bars that echo Doremi's three-wave logo but as an **EQ / energy meter** — bar heights 40% / 70% / 100%, gradient-filled. Doremi = three waves; Doremix = three bars. Family resemblance, own identity.
-- Always on ink. Clear space = cap-height around the mark.
+## 7. Logo / wordmark
 
-## 7. Motion
+- **Wordmark:** `Doremix` in Space Grotesk. The **`x`** is a **crossfade** — two crossing waveform strokes, one fading out / one in. In v2 the whole wordmark can carry the spectrum gradient with a soft glow.
+- **Mark:** three rising **EQ / energy bars** (40% / 70% / 100%), spectrum-filled, glowing — echoes Doremi's three-wave mark (Doremi = waves, Doremix = bars). Beat-reactive when live.
 
-- The energy curve **breathes** and reacts (idle = slow drift; playing = pulses on the beat).
-- Transitions are quick and confident (120–200ms, `cubic-bezier(0.2, 0.8, 0.2, 1)`). No bounce, no slow fades.
-- Beat-reactive accents only when audio is playing — never decorative-only animation that screams "template."
+## 8. Voice
 
-## 8. Anti-slop guardrails
+Founder-direct, short, concrete — but a touch more playful and nocturnal than v1 (it's a party tool, not enterprise SaaS). No buzzwords, no emoji in product copy, no em-dash slop.
 
-No stock DJ clip-art, no glowing neon headphones hero, no purple-gradient-on-black SaaS template, no rounded-blob illustrations, no emoji headings, no "✨". Reference altitude: Linear / Teenage Engineering / a good Boiler Room site — restrained, technical, a little cold, music-first. Show the **product** (the curve, the decks, the cue sheet), not mascots.
+- ✅ "Drop your tracks. Tell it the vibe. Hit play."
+- ✅ "It builds the energy. You call the drops."
+- ✅ "Vibe DJing — describe the night, it spins it."
+- ❌ "Leverage AI to revolutionize your music experience."
 
-## 9. Naming inside the product
+## 9. Still-crafted guardrails (vivid ≠ slop)
 
-- The AI is just "Doremix" (or "the conductor" in docs). No cutesy persona name in UI copy.
-- A planned set = a **set**. The plan it emits = the **cue sheet**. A blend between tracks = a **transition**. The live steer chips = **quick prompts**.
+Go colorful and techy, but it must look *designed*, not template-generated. No literal stock DJ/headphone photos. No flat single-purple gradient (use the full spectrum). Motion must mean something (beat-reactive, energy-arc) — not decorative wobble. Show the **product** (the lit curve, the decks, the cue sheet, the sets dashboard). Reference altitude: **Lovable.dev**, Framer showcase sites, a vivid Vercel/Linear gradient moment, a Boiler Room after-dark feel — colorful, alive, premium.

@@ -13,18 +13,25 @@ export function EnergyMeter({ value, label = "ROOM ENERGY", bars = 16 }: EnergyM
         {Array.from({ length: bars }).map((_, i) => {
           const on = i < lit;
           const h = 6 + (i / bars) * 18;
-          // color ramps with the gradient across the row
+          // color ramps across the spectrum as the row fills
           const hue = i / bars;
           const color =
-            hue < 0.5 ? "#FF3D81" : hue < 0.8 ? "#FF9F1C" : "#2EC4B6";
+            hue < 0.25
+              ? "#FF2E97"
+              : hue < 0.5
+                ? "#FFB627"
+                : hue < 0.75
+                  ? "#2EE6C4"
+                  : "#2EA8FF";
           return (
             <span
               key={i}
               style={{
                 height: h,
                 width: 4,
-                background: on ? color : "#1E1E28",
+                background: on ? color : "rgba(255,255,255,0.1)",
                 opacity: on ? 1 : 0.6,
+                boxShadow: on ? `0 0 8px ${color}` : "none",
                 transition: "background 90ms linear, opacity 90ms linear",
               }}
               className="rounded-[1px]"

@@ -300,4 +300,59 @@ export class MockConductor implements Conductor {
       stem_ops: [],
     };
   }
+
+  /** What the conductor "says" when it first spins the set. */
+  planMessage(brief: Brief, sheet: CueSheet): string {
+    const n = sheet.tracks.length;
+    const opener = sheet.tracks[0];
+    const opensWith = this.lastLibrary.find((t) => t.id === opener?.track_id);
+    const arc =
+      brief.arc === "rising"
+        ? "a steady climb to the top"
+        : brief.arc === "wave"
+          ? "an ebb-and-flow with a few peaks"
+          : "a long build, then the peak, then a release";
+    const lead = opensWith
+      ? `Opening with ${opensWith.title} in ${opener?.key ?? opensWith.key}.`
+      : `Opening soft in ${opener?.key ?? "8A"}.`;
+    const rules: string[] = [];
+    if (brief.rules.harmonicOnly) rules.push("staying harmonic");
+    if (brief.rules.noVocalsAfterPeak) rules.push("no vocals after the peak");
+    if (brief.rules.longBlends) rules.push("long 16-bar blends");
+    const ruleLine = rules.length > 0 ? ` Keeping it ${rules.join(", ")}.` : "";
+    return `${lead} Planned ${n} tracks over ${brief.lengthMin} minutes — ${arc}.${ruleLine} Say the word and I'll re-steer the tail live.`;
+  }
+
+  /** What the conductor "says" when re-steered mid-set. */
+  steerMessage(text: string, state: StateReport, next: CueSheet): string {
+    const t = text.toLowerCase();
+    const safe = state.next_safe_edit_bar;
+    // the first non-frozen track id → name + key for a concrete reply
+    const upcoming = next.tracks.find((tr) => tr.play_in_bar >= safe);
+    const upTrack = upcoming
+      ? this.lastLibrary.find((x) => x.id === upcoming.track_id)
+      : undefined;
+    const toKey = upcoming?.key ? `, moving to ${upcoming.key}` : "";
+    const named = upTrack ? ` Next up: ${upTrack.title}.` : "";
+
+    if (/(build|raise|harder|peak|energy|hype|drop now|double|up)/.test(t)) {
+      return `Lifting the energy over the next 16 bars${toKey}.${named}`;
+    }
+    if (/(cool|chill|cool it|down|release|breathe|easy)/.test(t)) {
+      return `Pulling it back, easing the energy from bar ${safe}${toKey}.${named}`;
+    }
+    if (/(instrumental|no vocals)/.test(t)) {
+      return `Going instrumental from the peak on${toKey}.${named}`;
+    }
+    if (/(more vocals|vocal)/.test(t)) {
+      return `Bringing the vocals back in${toKey}.${named}`;
+    }
+    if (/(extend|longer|stretch)/.test(t)) {
+      return `Stretching the set out — rewriting the tail from bar ${safe}.${named}`;
+    }
+    if (/surprise/.test(t)) {
+      return `Throwing a curveball into the back half${toKey}.${named}`;
+    }
+    return `On it — rewriting from bar ${safe}${toKey}.${named}`;
+  }
 }

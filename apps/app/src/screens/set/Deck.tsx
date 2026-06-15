@@ -13,6 +13,7 @@ interface DeckProps {
   gain: number;
 }
 
+/** A glassy deck card. The playing deck gets a colored glow ring. */
 export function Deck({ slot, report, cueTrack, track, progress, gain }: DeckProps) {
   const playing = report?.state === "playing";
   const cued = report?.state === "cued";
@@ -20,8 +21,8 @@ export function Deck({ slot, report, cueTrack, track, progress, gain }: DeckProp
 
   return (
     <div
-      className={`panel relative overflow-hidden p-4 transition-colors duration-150 ${
-        playing ? "border-ink-3" : "border-ink-3/60"
+      className={`glass relative overflow-hidden p-4 transition-shadow duration-200 ${
+        playing ? "shadow-glow-magenta" : ""
       }`}
     >
       <div className="mb-3 flex items-center justify-between">
@@ -36,7 +37,7 @@ export function Deck({ slot, report, cueTrack, track, progress, gain }: DeckProp
             </span>
           )}
           {cued && (
-            <span className="font-mono text-[10px] uppercase tracking-wide text-energy2">
+            <span className="font-mono text-[10px] uppercase tracking-wide text-amber">
               cued
             </span>
           )}
@@ -64,12 +65,15 @@ export function Deck({ slot, report, cueTrack, track, progress, gain }: DeckProp
           {/* gain / level */}
           <div className="mt-3 flex items-center gap-3">
             <span className="font-mono text-[10px] uppercase text-mist">gain</span>
-            <div className="relative h-1.5 flex-1 overflow-hidden rounded-full bg-ink-3">
+            <div className="relative h-1.5 flex-1 overflow-hidden rounded-full bg-white/10">
               <div
                 className={`absolute inset-y-0 left-0 rounded-full ${
-                  playing ? "bg-energy" : "bg-mist/40"
+                  playing ? "bg-spectrum" : "bg-white/30"
                 }`}
-                style={{ width: `${Math.round(gain * 100)}%`, transition: "width 120ms linear" }}
+                style={{
+                  width: `${Math.round(gain * 100)}%`,
+                  transition: "width 120ms linear",
+                }}
               />
             </div>
             <span className="w-9 text-right font-mono text-[10px] text-mist">

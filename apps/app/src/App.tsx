@@ -1,18 +1,18 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import { AppNav } from "@/components/AppNav";
-import { Library } from "@/screens/Library";
-import { Brief } from "@/screens/Brief";
-import { Booth } from "@/screens/Booth";
+import { MeshBackground } from "@/components/MeshBackground";
+import { Sets } from "@/screens/Sets";
+import { SetWorkspace } from "@/screens/SetWorkspace";
 
 export function App() {
   return (
-    <div className="min-h-full">
+    <div className="relative min-h-full">
+      <MeshBackground />
       <AppNav />
       <main className="animate-fade-in">
         <Routes>
-          <Route path="/" element={<Library />} />
-          <Route path="/brief" element={<Brief />} />
-          <Route path="/booth" element={<Booth />} />
+          <Route path="/" element={<Sets />} />
+          <Route path="/set/:id" element={<SetWorkspace />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
