@@ -31,3 +31,6 @@ build/
 /apps/app/public/demo-audio/*
 !/apps/app/public/demo-audio/.gitkeep
 .gstack/
+
+# deploy staging
+_site/
