@@ -198,9 +198,9 @@
      HERO (A scale + C instrument) - the playable identity
      ============================================================ */
   header{position:relative; min-height:100svh; display:flex; flex-direction:column; justify-content:flex-end;
-    padding-top:96px; padding-bottom:clamp(22px,4vw,46px); overflow:hidden}
+    padding-top:80px; padding-bottom:clamp(16px,2.6vw,32px); overflow:hidden}
   .hero-top{position:relative; z-index:3; padding-inline:var(--pad); max-width:var(--maxw); margin:0 auto; width:100%}
-  .kicker{display:flex; align-items:center; gap:13px; flex-wrap:wrap; margin-bottom:clamp(12px,2.4vw,24px)}
+  .kicker{display:flex; align-items:center; gap:13px; flex-wrap:wrap; margin-bottom:clamp(8px,1.6vw,16px)}
   .kicker .tag{font-family:var(--mono); font-size:clamp(10px,1.3vw,12.5px); letter-spacing:.16em; text-transform:uppercase; color:var(--mist); display:inline-flex; align-items:center; gap:9px}
   .kicker .tag .d{width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 9px var(--accent); transition:background .2s, box-shadow .2s}
   .kicker .rule{flex:1; height:1px; min-width:24px; background:linear-gradient(90deg,var(--hair),transparent)}
@@ -211,11 +211,13 @@
     font-weight:600; letter-spacing:-0.04em; white-space:nowrap}
   .mega-line .ch{display:inline-block; will-change:font-variation-settings; font-variation-settings:"wght" 500}
   /* type SCALE rides --type-boost; weight floor + wave ride --energy (set per-char in JS) */
-  .mega-line.l-vibe{font-size:calc(clamp(58px,15.5vw,232px) * var(--type-boost)); color:var(--paper)}
-  .mega-line.l-your{font-size:calc(clamp(58px,15.5vw,232px) * var(--type-boost))}
+  /* size rides viewport WIDTH and HEIGHT so the giant type still shares the
+     first screen with the prompt centerpiece on a laptop, stays huge on tall/large displays */
+  .mega-line.l-vibe{font-size:calc(min(13vw,12.7vh,200px) * var(--type-boost)); color:var(--paper)}
+  .mega-line.l-your{font-size:calc(min(13vw,12.7vh,200px) * var(--type-boost))}
   .mega-line.l-your .ch{color:transparent; background:var(--spectrum); background-size:180% 100%;
     -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;}
-  .mega-line.l-set{font-size:calc(clamp(54px,14.5vw,220px) * var(--type-boost)); margin-top:-.02em}
+  .mega-line.l-set{font-size:calc(min(12.2vw,11.9vh,190px) * var(--type-boost)); margin-top:-.02em}
   .mega-line.l-set .ch{color:transparent; -webkit-text-stroke:clamp(1px,.18vw,2.4px) rgba(246,244,255,.62); text-stroke:clamp(1px,.18vw,2.4px) rgba(246,244,255,.62)}
 
   /* the spectrum energy curve that SLICES through the big letters (A) */
@@ -223,17 +225,45 @@
   .slice svg{width:100%; height:100%; overflow:visible}
 
   /* the playful secondary hook line */
-  .hook{position:relative; z-index:3; width:100%; padding-inline:var(--pad); max-width:var(--maxw); margin:clamp(16px,3vw,30px) auto 0;
-    font-family:var(--display); font-weight:500; font-size:clamp(19px,3vw,34px); letter-spacing:-0.02em; color:var(--paper)}
+  .hook{position:relative; z-index:3; width:100%; padding-inline:var(--pad); max-width:var(--maxw); margin:clamp(12px,2vw,22px) auto 0;
+    font-family:var(--display); font-weight:500; font-size:clamp(18px,2.6vw,30px); letter-spacing:-0.02em; color:var(--paper)}
   .hook b{background:var(--spectrum); background-size:200% 200%; -webkit-background-clip:text; background-clip:text; color:transparent; animation:hue 12s var(--ease) infinite; font-weight:600}
-  .hero-lede{position:relative; z-index:3; width:100%; padding-inline:var(--pad); max-width:min(680px,calc(var(--maxw) - var(--pad)*2)); margin:clamp(10px,1.6vw,16px) auto 0;
-    font-size:clamp(15.5px,1.9vw,19px); color:var(--mist); line-height:1.5}
+  .hero-lede{position:relative; z-index:3; width:100%; padding-inline:var(--pad); max-width:min(680px,calc(var(--maxw) - var(--pad)*2)); margin:clamp(8px,1.2vw,14px) auto 0;
+    font-size:clamp(15px,1.7vw,18px); color:var(--mist); line-height:1.45}
   .hero-lede b{color:var(--paper); font-weight:600}
+
+  /* ---------- PROMPT TO SET, lifted into the hero (Lovable-style) ---------- */
+  .hero-prompt-wrap{position:relative; z-index:3; width:100%; padding-inline:var(--pad); max-width:var(--maxw); margin:clamp(12px,1.8vw,20px) auto 0}
+  .hero-prompt{max-width:760px; margin:0 auto; padding:clamp(15px,2.4vw,20px);
+    background:linear-gradient(180deg,rgba(22,22,36,.74),rgba(14,14,26,.72));
+    border:1px solid var(--glass-border); border-radius:20px;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.06), 0 26px 80px -40px rgba(155,92,255,.55), 0 0 50px -24px var(--glow);
+    transition:box-shadow .3s var(--ease), border-color .25s var(--ease);}
+  .hero-prompt .pc-field{align-items:center}
+  /* compact the in-hero preview so the centerpiece clears the fold with the giant type */
+  .hero-prompt .pc-chips{margin-top:13px; padding-top:13px}
+  .hero-prompt .pc-preview{margin-top:13px}
+  .hero-prompt .pc-curve{height:66px}
+  .hero-prompt .pc-pv-body{padding:9px 13px}
+  /* "Spin it" lives inside the field on desktop */
+  .hp-spin{flex:none; align-self:stretch; display:inline-flex; align-items:center; gap:7px; cursor:pointer;
+    font-family:var(--display); font-weight:700; font-size:13.5px; color:#10040C;
+    padding:10px 16px; border-radius:12px; border:1px solid rgba(255,255,255,.06);
+    background:var(--spectrum); background-size:200% 100%; background-position:0 0;
+    box-shadow:0 1px 0 rgba(255,255,255,.3) inset, 0 8px 26px -10px rgba(255,46,151,.6);
+    transition:transform .15s var(--ease), background-position .5s var(--ease), box-shadow .22s var(--ease); white-space:nowrap;}
+  .hp-spin:hover{transform:translateY(-1px); background-position:100% 0}
+  .hp-spin:active{transform:translateY(0) scale(.98)}
+  @media (max-width:560px){
+    .hero-prompt .pc-field{flex-wrap:wrap}
+    .hero-prompt .pc-text{flex:1 1 100%}
+    .hp-spin{align-self:flex-start; margin-left:38px}
+  }
 
   /* ---------- THE MORPH FADER (C) embedded in the hero ---------- */
   .deck-wrap{padding-inline:var(--pad); width:100%; max-width:var(--maxw); margin:0 auto}
   .deck{
-    position:relative; z-index:3; width:100%; max-width:760px; margin:clamp(22px,3.4vw,34px) auto 0;
+    position:relative; z-index:3; width:100%; max-width:760px; margin:clamp(14px,2.2vw,22px) auto 0;
     border-radius:22px; padding:1.5px;
     background:linear-gradient(140deg,rgba(255,46,151,.42),rgba(255,182,39,.26),rgba(46,168,255,.4),rgba(155,92,255,.5));
     box-shadow:0 30px 90px -38px rgba(155,92,255,.6), 0 0 60px -22px var(--glow);
@@ -485,14 +515,87 @@
   .sc-feat h4{font-family:var(--display); font-weight:600; font-size:14.5px; letter-spacing:-0.01em; margin-bottom:3px}
   .sc-feat p{font-size:12.5px; color:var(--mist); line-height:1.5}
 
-  /* ===================== HOW IT WORKS ===================== */
-  .steps{display:grid; grid-template-columns:repeat(4,1fr); gap:18px; margin-top:54px}
-  .step{padding:28px 24px 26px; position:relative}
-  .step .glyph{width:46px; height:46px; margin-bottom:22px; filter:drop-shadow(0 0 12px rgba(46,230,196,.4))}
-  .step .idx{position:absolute; top:24px; right:24px; font-family:var(--mono); font-size:12px; color:var(--mist)}
-  .step h3{font-family:var(--display); font-weight:600; font-size:17px; letter-spacing:-0.01em; margin-bottom:9px}
-  .step p{font-size:13.8px; color:var(--mist); line-height:1.55}
-  .step p em{color:var(--paper); font-style:normal}
+  /* ===================== HOW IT WORKS (STORYBOARD) =====================
+     The 4 steps become 4 sequenced FRAMES of a user story. A vertical
+     spectrum energy-curve thread runs down the left rail and connects
+     numbered nodes (frame 1 -> 2 -> 3 -> 4). Each frame carries a
+     hand-built inline-SVG mini scene of that moment. Illustration and
+     copy alternate sides. Static glass surfaces, no blur/canvas. */
+  .story{position:relative; margin-top:clamp(40px,5vw,58px); display:flex; flex-direction:column; gap:clamp(26px,4vw,46px)}
+
+  /* the brand-motif thread: a vertical energy curve pinned to the left rail */
+  .story-thread{position:absolute; left:30px; top:6px; bottom:6px; width:64px; z-index:0; pointer-events:none}
+  .story-thread svg{width:100%; height:100%; overflow:visible}
+  .story-thread .tt-track{fill:none; stroke:rgba(255,255,255,.10); stroke-width:2}
+  /* thread is fully drawn by default (no-JS safe); only ARMED (by JS) does it hide then draw in */
+  .story-thread .tt-lit{fill:none; stroke:url(#storyGrad); stroke-width:3; stroke-linecap:round;
+    stroke-dasharray:var(--tt-len,2400); stroke-dashoffset:0;
+    transition:stroke-dashoffset 1.6s var(--ease) .1s}
+  .story.reveal-armed .tt-lit{stroke-dashoffset:var(--tt-len,2400)}
+  .story.reveal-armed.in .tt-lit{stroke-dashoffset:0}
+
+  .frame{position:relative; z-index:1; display:grid; grid-template-columns:1.02fr 0.98fr; align-items:center;
+    gap:clamp(20px,3.4vw,46px); padding-left:clamp(58px,7vw,104px)}
+  .frame:nth-child(even){direction:rtl}        /* flip illustration/copy sides */
+  .frame:nth-child(even) > *{direction:ltr}
+
+  /* the numbered node where the frame meets the thread */
+  .frame .node{position:absolute; left:clamp(18px,2.4vw,38px); top:clamp(18px,3vw,34px); z-index:2;
+    width:44px; height:44px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    font-family:var(--display); font-weight:700; font-size:16px; color:#10040C;
+    background:var(--spectrum); background-size:200% 200%;
+    box-shadow:0 8px 26px -8px rgba(255,46,151,.55), 0 0 0 5px var(--ink), inset 0 1px 0 rgba(255,255,255,.4);
+    transition:transform .5s var(--ease), opacity .5s var(--ease)}
+  /* visible by default; only armed frames hide the node before reveal */
+  .frame.reveal-armed .node{transform:scale(.6); opacity:0}
+  .frame.reveal-armed.in .node{transform:scale(1); opacity:1}
+  @media (max-width:680px){ .frame:nth-child(even) .node{left:auto} }
+
+  .frame-copy{position:relative}
+  .frame-copy .ftag{font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--mist); display:inline-flex; align-items:center; gap:8px; margin-bottom:11px}
+  .frame-copy .ftag .d{width:5px; height:5px; border-radius:50%; background:var(--accent); box-shadow:0 0 8px var(--accent)}
+  .frame-copy h3{font-family:var(--display); font-weight:600; font-size:clamp(20px,2.6vw,26px); letter-spacing:-0.02em; line-height:1.08; margin-bottom:11px}
+  .frame-copy p{font-size:clamp(14px,1.5vw,15.5px); color:var(--mist); line-height:1.6; max-width:42ch}
+  .frame-copy p em{color:var(--paper); font-style:normal}
+  .frame-copy .reinforce{margin-top:14px; font-family:var(--mono); font-size:11px; letter-spacing:.02em; color:var(--c-teal); display:inline-flex; align-items:center; gap:8px}
+  .frame-copy .reinforce .lk{width:11px; height:11px; flex:none}
+
+  /* the illustration plate: static translucent glass scene */
+  .frame-art{position:relative; border-radius:18px; padding:clamp(15px,2vw,20px); overflow:hidden;
+    background:var(--glass); border:1px solid var(--glass-border);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.05), 0 30px 80px -46px rgba(155,92,255,.5);
+    transition:border-color .25s var(--ease), transform .25s var(--ease), box-shadow .25s var(--ease)}
+  .frame.in .frame-art{} /* art reveals via parent .reveal */
+  .frame-art:hover{border-color:rgba(255,255,255,.2); transform:translateY(-3px)}
+  .frame-art::before{content:""; position:absolute; inset:0; pointer-events:none;
+    background:radial-gradient(120% 90% at 8% 0,rgba(46,230,196,.10),transparent 55%),radial-gradient(120% 90% at 100% 100%,rgba(255,46,151,.10),transparent 58%)}
+  .frame-art .scene{position:relative; z-index:1; width:100%; height:auto; display:block; aspect-ratio:16/10}
+
+  /* in-illustration metadata chips (mono) + labels (display) */
+  .scene text.meta{font-family:var(--mono); letter-spacing:.02em}
+  .scene text.lbl{font-family:var(--display); font-weight:600; letter-spacing:-0.01em}
+  /* draw-in for the energy curves inside scenes; drawn by default, armed (by JS) hides then redraws */
+  .scene .draw{stroke-dasharray:var(--dl,600); stroke-dashoffset:0; transition:stroke-dashoffset 1.4s var(--ease) .15s}
+  .scene .draw.dl360{--dl:360}
+  .frame.reveal-armed .scene .draw{stroke-dashoffset:var(--dl,600)}
+  .frame.reveal-armed.in .scene .draw{stroke-dashoffset:0}
+  /* chips fade/rise as the frame reveals; visible by default for no-JS safety */
+  .scene .pop{transition:opacity .5s var(--ease), transform .5s var(--ease)}
+  .frame.reveal-armed .scene .pop{opacity:0; transform:translateY(6px)}
+  .frame.reveal-armed.in .scene .pop{opacity:1; transform:none}
+  .frame.reveal-armed.in .scene .pop.d1{transition-delay:.30s}
+  .frame.reveal-armed.in .scene .pop.d2{transition-delay:.46s}
+  .frame.reveal-armed.in .scene .pop.d3{transition-delay:.62s}
+  .frame.reveal-armed.in .scene .pop.d4{transition-delay:.78s}
+
+  @media (max-width:680px){
+    .story-thread{left:16px; width:40px}
+    .frame{grid-template-columns:1fr; gap:16px; padding-left:clamp(46px,12vw,58px)}
+    .frame:nth-child(even){direction:ltr}
+    .frame .node{left:6px; top:0; width:38px; height:38px; font-size:14px}
+    .frame-art{order:2}
+    .frame-copy{order:1}
+  }
 
   /* ===================== MISSING SQUARE ===================== */
   .compare{display:grid; grid-template-columns:repeat(3,1fr); gap:18px; margin-top:50px}
@@ -586,6 +689,26 @@
   .eq i{animation:eq 1.05s var(--ease) infinite}
   @keyframes eq{0%,100%{transform:scaleY(.28)}50%{transform:scaleY(1)}}
 
+  /* short-viewport laptops: clamp the giant type harder + tighten hero rhythm so the
+     prompt centerpiece reliably clears the fold alongside the type. */
+  @media (min-width:781px) and (max-height:940px){
+    .mega-line.l-vibe,.mega-line.l-your{font-size:calc(min(13vw,11.4vh,200px) * var(--type-boost))}
+    .mega-line.l-set{font-size:calc(min(12.2vw,10.7vh,190px) * var(--type-boost))}
+    .hook{margin-top:clamp(8px,1.4vw,14px); font-size:clamp(17px,2.2vw,26px)}
+    .hero-lede{margin-top:6px}
+    .hero-prompt-wrap{margin-top:10px}
+    .hero-prompt{padding:13px 15px}
+    .hero-prompt .pc-preview{margin-top:11px}
+    .hero-prompt .pc-curve{height:54px}
+  }
+  @media (min-width:781px) and (max-height:780px){
+    .mega-line.l-vibe,.mega-line.l-your{font-size:calc(min(13vw,10.4vh,200px) * var(--type-boost))}
+    .mega-line.l-set{font-size:calc(min(12.2vw,9.8vh,190px) * var(--type-boost))}
+    .hero-prompt .pc-chips{margin-top:10px; padding-top:10px}
+    .hero-prompt .pc-curve{height:42px}
+    .hero-cta-note{margin-top:8px}
+  }
+
   /* ===================== RESPONSIVE ===================== */
   @media (max-width:980px){
     .setcards{grid-template-columns:repeat(2,1fr)}
@@ -595,7 +718,9 @@
   }
   @media (max-width:940px){
     .compare{grid-template-columns:1fr; gap:14px}
-    .steps{grid-template-columns:repeat(2,1fr)}
+    .frame{grid-template-columns:1fr; gap:18px; padding-left:clamp(58px,9vw,90px)}
+    .frame:nth-child(even){direction:ltr}
+    .frame-art{order:2} .frame-copy{order:1}
     .cue-grid{grid-template-columns:1fr; gap:30px}
     .cue-copy{order:-1}
     .parallel{grid-template-columns:1fr; gap:8px; text-align:center}
@@ -609,7 +734,6 @@
   }
   @media (max-width:680px){
     .nav-links a:not(.gh){display:none}
-    .steps{grid-template-columns:1fr}
     .trust .wrap{justify-content:flex-start}
     .setcards{grid-template-columns:1fr}
     .bf-url{max-width:none}
@@ -627,6 +751,9 @@
     .blob{animation:none !important}
     .mesh-inner{transform:none !important}
     .reveal,.reveal-armed{opacity:1 !important; transform:none !important}
+    /* storyboard pieces don't depend on the JS-added .in class when motion is reduced */
+    .frame .node,.scene .pop{opacity:1 !important; transform:none !important}
+    .scene .draw,.story-thread .tt-lit{stroke-dashoffset:0 !important}
     .gradtext,.vside.is-djing h3,.ccard.is-us .kind,.dash-head h3,.hook b,.ticker .sep{background-position:0 50% !important}
     .ticker .track{transform:none}
     .mega-line .ch,.fc-mega .ch{font-variation-settings:"wght" 600 !important}
@@ -738,9 +865,54 @@
   </div>
 
   <p class="hook">Don't DJ it. <b>Play it.</b></p>
-  <p class="hero-lede">You don't need decks. You can't beatmatch. You don't have to. Describe the night and Doremix conducts the whole thing, beatmatched and live, on <b>your own tracks</b>. Drag the fader below and ride the page from warm-up to the drop.</p>
+  <p class="hero-lede">You don't need decks. You can't beatmatch. You don't have to. <b>Type the night</b> below and Doremix lays the whole set on <b>your own tracks</b>. Then ride the energy with the fader, warm-up to the drop.</p>
 
-  <!-- THE MORPH FADER (the interactive hero element) -->
+  <!-- THE PROMPT TO SET — the centerpiece, lifted into the hero -->
+  <div class="hero-prompt-wrap" id="prompt-sec">
+    <div class="glass hero-prompt" id="promptCard">
+      <div class="pc-field">
+        <svg class="pc-glyph" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M4 16C8 16 9 6 12 6s4 10 8 10" stroke="url(#mg)" stroke-width="2.2" stroke-linecap="round"/>
+          <circle cx="12" cy="6" r="2.4" fill="#FFB627"/>
+        </svg>
+        <div class="pc-text" id="promptText" data-ph="Describe tonight... sunset rooftop, build slow, no vocals till the peak" tabindex="0" role="textbox" aria-label="Vibe description">Sunset rooftop... build slow, no vocals till the peak</div>
+        <button class="hp-spin" id="hpSpin" type="button" aria-label="Spin it">
+          <span class="hp-spin-lbl">Spin it</span>
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8h9M8.5 4l4 4-4 4" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+      <div class="pc-chips" role="list" aria-label="Example vibes">
+        <button class="vchip active" type="button" data-vibe="rooftop">Sunset rooftop</button>
+        <button class="vchip" type="button" data-vibe="warehouse">Warehouse 2am</button>
+        <button class="vchip" type="button" data-vibe="beach">Beach sundowner</button>
+        <button class="vchip" type="button" data-vibe="party">Birthday house party</button>
+        <button class="vchip" type="button" data-vibe="afterhours">After-hours deep</button>
+      </div>
+
+      <!-- the set being drawn -->
+      <div class="pc-preview">
+        <div class="pc-pv-top">
+          <span class="pc-pv-name" id="pcName">Sunset rooftop</span>
+          <span class="pc-pv-stat" id="pcStat"><span class="pc-pv-dot" id="pcDot"></span><span id="pcStatTxt">live</span></span>
+        </div>
+        <div class="pc-pv-body">
+          <svg class="pc-curve" viewBox="0 0 600 110" preserveAspectRatio="none" aria-hidden="true">
+            <defs><clipPath id="pcClip"><rect id="pcClipRect" x="0" y="0" width="600" height="110"/></clipPath></defs>
+            <path id="pcFill" fill="url(#pvArea)"></path>
+            <path id="pcGhost" fill="none" stroke="rgba(255,255,255,.14)" stroke-width="2"></path>
+            <path id="pcDraw" fill="none" stroke="url(#pvLine)" stroke-width="3" stroke-linecap="round" clip-path="url(#pcClip)"></path>
+            <line id="pcLine" x1="0" x2="0" y1="0" y2="110" stroke="#3DFF88" stroke-width="1.4" opacity="0"></line>
+            <circle id="pcHead" r="4.5" fill="#3DFF88" opacity="0"></circle>
+          </svg>
+          <div class="pc-meta">
+            <span id="pcBpm">118-124 BPM</span><span id="pcBar">bar 0 / 240</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- THE MORPH FADER (ride the energy after you type the vibe) -->
   <div class="deck-wrap">
     <div class="deck" id="deck">
       <div class="deck-inner">
@@ -835,54 +1007,7 @@
   </div>
 </div>
 
-<!-- ===================== PROMPT TO SET ===================== -->
-<section id="prompt-sec">
-  <div class="wrap">
-    <div class="sec-head center reveal">
-      <p class="sec-tag"><span class="num">01</span> <span class="lbl">Prompt to set</span></p>
-      <h2>You talk. It spins.</h2>
-      <p class="lede">Type a night the way you'd text a friend. Doremix reads it, picks from your crate, and lays the whole arc. Pick one and watch a set draw itself.</p>
-    </div>
-
-    <div class="glass promptcard reveal" id="promptCard">
-      <div class="pc-field">
-        <svg class="pc-glyph" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <path d="M4 16C8 16 9 6 12 6s4 10 8 10" stroke="url(#mg)" stroke-width="2.2" stroke-linecap="round"/>
-          <circle cx="12" cy="6" r="2.4" fill="#FFB627"/>
-        </svg>
-        <div class="pc-text" id="promptText" data-ph="Describe tonight... sunset rooftop, build slow, no vocals till the peak" tabindex="0" role="textbox" aria-label="Vibe description">Sunset rooftop... build slow, no vocals till the peak</div>
-      </div>
-      <div class="pc-chips" role="list" aria-label="Example vibes">
-        <button class="vchip active" type="button" data-vibe="rooftop">Sunset rooftop</button>
-        <button class="vchip" type="button" data-vibe="warehouse">Warehouse 2am</button>
-        <button class="vchip" type="button" data-vibe="beach">Beach sundowner</button>
-        <button class="vchip" type="button" data-vibe="party">House party</button>
-        <button class="vchip" type="button" data-vibe="afterhours">After-hours deep</button>
-      </div>
-
-      <!-- the set being drawn -->
-      <div class="pc-preview">
-        <div class="pc-pv-top">
-          <span class="pc-pv-name" id="pcName">Sunset rooftop</span>
-          <span class="pc-pv-stat" id="pcStat"><span class="pc-pv-dot" id="pcDot"></span><span id="pcStatTxt">live</span></span>
-        </div>
-        <div class="pc-pv-body">
-          <svg class="pc-curve" viewBox="0 0 600 110" preserveAspectRatio="none" aria-hidden="true">
-            <defs><clipPath id="pcClip"><rect id="pcClipRect" x="0" y="0" width="600" height="110"/></clipPath></defs>
-            <path id="pcFill" fill="url(#pvArea)"></path>
-            <path id="pcGhost" fill="none" stroke="rgba(255,255,255,.14)" stroke-width="2"></path>
-            <path id="pcDraw" fill="none" stroke="url(#pvLine)" stroke-width="3" stroke-linecap="round" clip-path="url(#pcClip)"></path>
-            <line id="pcLine" x1="0" x2="0" y1="0" y2="110" stroke="#3DFF88" stroke-width="1.4" opacity="0"></line>
-            <circle id="pcHead" r="4.5" fill="#3DFF88" opacity="0"></circle>
-          </svg>
-          <div class="pc-meta">
-            <span id="pcBpm">118-124 BPM</span><span id="pcBar">bar 0 / 240</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
+<!-- (Prompt-to-set now lives in the hero. Section anchor kept there as #prompt-sec.) -->
 
 <!-- ===================== PRODUCT SHOWCASE ===================== -->
 <section id="showcase" class="showcase">
@@ -1067,48 +1192,215 @@
       <p class="lede">A slow LLM plans the future of the set. A fast deterministic engine owns the clock. A 30-to-60-second lookahead makes live re-prompting glitch-free.</p>
     </div>
 
-    <div class="steps">
-      <div class="glass step reveal">
-        <span class="idx">01</span>
-        <svg class="glyph" viewBox="0 0 44 44" fill="none" aria-hidden="true">
-          <rect x="6" y="10" width="32" height="24" rx="4" stroke="url(#mg)" stroke-width="2.2"/>
-          <path d="M6 17h32" stroke="url(#mg)" stroke-width="2.2"/>
-          <path d="M22 28v-6M18 24l4-3 4 3" stroke="url(#mg)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- THE STORYBOARD: 4 frames of the user story, threaded by the energy curve -->
+    <div class="story reveal" id="story">
+      <!-- vertical spectrum thread connecting the frames (brand motif), draws in on reveal -->
+      <div class="story-thread" aria-hidden="true">
+        <svg viewBox="0 0 64 1000" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="storyGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#2EE6C4"/><stop offset=".34" stop-color="#2EA8FF"/><stop offset=".6" stop-color="#FFB627"/><stop offset=".82" stop-color="#FF2E97"/><stop offset="1" stop-color="#9B5CFF"/>
+            </linearGradient>
+          </defs>
+          <path class="tt-track" d="M32 8 C32 180 8 250 8 320 C8 400 56 470 56 560 C56 660 8 720 8 800 C8 880 32 940 32 992"/>
+          <path class="tt-lit"   d="M32 8 C32 180 8 250 8 320 C8 400 56 470 56 560 C56 660 8 720 8 800 C8 880 32 940 32 992"/>
         </svg>
-        <h3>Drop your tracks</h3>
-        <p>Drag a folder in. Each file is analyzed <em>locally</em>: BPM, key, energy, beatgrid. Nothing ever uploads.</p>
       </div>
 
-      <div class="glass step reveal">
-        <span class="idx">02</span>
-        <svg class="glyph" viewBox="0 0 44 44" fill="none" aria-hidden="true">
-          <path d="M9 13h26M9 22h18M9 31h22" stroke="url(#mg)" stroke-width="2.2" stroke-linecap="round"/>
-          <circle cx="33" cy="31" r="3.2" fill="#3DFF88"/>
-        </svg>
-        <h3>Describe the set</h3>
-        <p>"40-minute sunset rooftop, build slow, no vocals after the peak." Plain language, <em>not a knob</em>.</p>
-      </div>
+      <!-- ===== FRAME 01: Drop your tracks ===== -->
+      <article class="frame reveal">
+        <span class="node" aria-hidden="true">1</span>
+        <div class="frame-copy">
+          <span class="ftag"><span class="d"></span>Frame 01 · You</span>
+          <h3>Drop your tracks</h3>
+          <p>Drag a folder of your own music into the window. Each file is read <em>on your machine</em> for BPM, key and energy. The track rows light up as it reads them.</p>
+          <span class="reinforce"><svg class="lk" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2" stroke="#2EE6C4" stroke-width="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3" stroke="#2EE6C4" stroke-width="2"/></svg>Analyzed locally. Nothing uploads.</span>
+        </div>
+        <div class="frame-art">
+          <svg class="scene" viewBox="0 0 320 200" role="img" aria-label="A folder of tracks dragged into the app; rows show BPM, Camelot key and energy as they analyze locally.">
+            <defs>
+              <linearGradient id="f1bar" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#2EE6C4"/><stop offset="1" stop-color="#2EA8FF"/></linearGradient>
+            </defs>
+            <!-- app window -->
+            <rect x="14" y="14" width="292" height="172" rx="12" fill="rgba(10,10,18,.55)" stroke="rgba(255,255,255,.14)"/>
+            <circle cx="28" cy="28" r="3" fill="#ff5f57"/><circle cx="38" cy="28" r="3" fill="#febc2e"/><circle cx="48" cy="28" r="3" fill="#28c840"/>
+            <text class="meta" x="296" y="31" text-anchor="end" font-size="8" fill="#B4B0CC">analyzing · local</text>
+            <line x1="14" y1="42" x2="306" y2="42" stroke="rgba(255,255,255,.10)"/>
+            <!-- dragged folder cursor -->
+            <g class="pop d1">
+              <rect x="40" y="58" width="46" height="34" rx="5" fill="rgba(155,92,255,.18)" stroke="#9B5CFF" stroke-width="1.6" stroke-dasharray="4 3"/>
+              <path d="M46 58v-5h10l4 4h12" fill="none" stroke="#9B5CFF" stroke-width="1.6" stroke-linejoin="round"/>
+              <text class="meta" x="63" y="79" text-anchor="middle" font-size="8" fill="#F6F4FF">/set</text>
+              <path d="M88 96l8 0 0 8z" fill="#F6F4FF"/>
+            </g>
+            <!-- track rows lighting up -->
+            <g transform="translate(104,54)">
+              <g class="pop d1"><rect x="0" y="0" width="186" height="26" rx="6" fill="rgba(255,255,255,.05)" stroke="rgba(255,255,255,.10)"/>
+                <rect x="9" y="8" width="2.5" height="10" rx="1" fill="url(#f1bar)"/><rect x="13" y="5" width="2.5" height="16" rx="1" fill="url(#f1bar)"/><rect x="17" y="9" width="2.5" height="8" rx="1" fill="url(#f1bar)"/>
+                <text class="lbl" x="30" y="17" font-size="9" fill="#F6F4FF">Nightcall.mp3</text>
+                <text class="meta" x="120" y="17" font-size="8" fill="#2EE6C4">124</text><text class="meta" x="146" y="17" font-size="8" fill="#2EA8FF">8A</text>
+                <rect x="164" y="9" width="14" height="8" rx="2" fill="rgba(46,230,196,.22)"/><rect x="164" y="9" width="8" height="8" rx="2" fill="#2EE6C4"/>
+              </g>
+              <g class="pop d2" transform="translate(0,32)"><rect x="0" y="0" width="186" height="26" rx="6" fill="rgba(255,255,255,.05)" stroke="rgba(255,255,255,.10)"/>
+                <rect x="9" y="6" width="2.5" height="14" rx="1" fill="url(#f1bar)"/><rect x="13" y="9" width="2.5" height="8" rx="1" fill="url(#f1bar)"/><rect x="17" y="4" width="2.5" height="17" rx="1" fill="url(#f1bar)"/>
+                <text class="lbl" x="30" y="17" font-size="9" fill="#F6F4FF">Solar.wav</text>
+                <text class="meta" x="120" y="17" font-size="8" fill="#2EE6C4">122</text><text class="meta" x="146" y="17" font-size="8" fill="#2EA8FF">9A</text>
+                <rect x="164" y="9" width="14" height="8" rx="2" fill="rgba(46,168,255,.22)"/><rect x="164" y="9" width="10" height="8" rx="2" fill="#2EA8FF"/>
+              </g>
+              <g class="pop d3" transform="translate(0,64)"><rect x="0" y="0" width="186" height="26" rx="6" fill="rgba(255,255,255,.05)" stroke="rgba(255,255,255,.10)"/>
+                <rect x="9" y="8" width="2.5" height="10" rx="1" fill="url(#f1bar)"/><rect x="13" y="4" width="2.5" height="16" rx="1" fill="url(#f1bar)"/><rect x="17" y="7" width="2.5" height="11" rx="1" fill="url(#f1bar)"/>
+                <text class="lbl" x="30" y="17" font-size="9" fill="#F6F4FF">Afterglow.flac</text>
+                <text class="meta" x="120" y="17" font-size="8" fill="#2EE6C4">126</text><text class="meta" x="146" y="17" font-size="8" fill="#2EA8FF">10A</text>
+                <rect x="164" y="9" width="14" height="8" rx="2" fill="rgba(255,182,39,.22)"/><rect x="164" y="9" width="12" height="8" rx="2" fill="#FFB627"/>
+              </g>
+            </g>
+            <text class="meta" x="104" y="178" font-size="7.5" fill="#6a6580">bpm</text>
+            <text class="meta" x="224" y="178" font-size="7.5" fill="#6a6580">key</text>
+            <text class="meta" x="262" y="178" font-size="7.5" fill="#6a6580">energy</text>
+          </svg>
+        </div>
+      </article>
 
-      <div class="glass step reveal">
-        <span class="idx">03</span>
-        <svg class="glyph" viewBox="0 0 44 44" fill="none" aria-hidden="true">
-          <path d="M5 31C13 31 14 13 22 13s9 18 17 18" stroke="url(#mg)" stroke-width="2.4" stroke-linecap="round"/>
-          <circle cx="22" cy="13" r="3" fill="#FFB627"/>
-        </svg>
-        <h3>It conducts</h3>
-        <p>The LLM emits a <em>cue sheet</em>; a deterministic Web Audio engine plays it, beatmatched and harmonic.</p>
-      </div>
+      <!-- ===== FRAME 02: Describe the set ===== -->
+      <article class="frame reveal">
+        <span class="node" aria-hidden="true">2</span>
+        <div class="frame-copy">
+          <span class="ftag"><span class="d"></span>Frame 02 · You</span>
+          <h3>Describe the set</h3>
+          <p>No knobs, no crates. You <em>just talk to it</em>. Type the night in plain language, or tap a vibe chip to nudge the mood.</p>
+          <span class="reinforce"><svg class="lk" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 12h10M4 7h13M4 17h7" stroke="#2EE6C4" stroke-width="2" stroke-linecap="round"/></svg>Plain language in. A set comes out.</span>
+        </div>
+        <div class="frame-art">
+          <svg class="scene" viewBox="0 0 320 200" role="img" aria-label="A prompt box with a typed vibe and a couple of vibe chips below it.">
+            <!-- prompt panel -->
+            <rect x="14" y="22" width="292" height="92" rx="14" fill="rgba(22,22,36,.7)" stroke="rgba(255,255,255,.14)"/>
+            <path class="pop d1" d="M28 40 l9 -7 0 14 z" fill="url(#mg)"/>
+            <g class="pop d1">
+              <text class="lbl" x="46" y="44" font-size="11" fill="#F6F4FF">sunset rooftop, build slow,</text>
+              <text class="lbl" x="46" y="61" font-size="11" fill="#F6F4FF">no vocals till the peak</text>
+              <rect x="232" y="51" width="2.5" height="13" rx="1" fill="#3DFF88"><animate attributeName="opacity" values="1;0;1" dur="1.05s" repeatCount="indefinite"/></rect>
+            </g>
+            <!-- send button -->
+            <g class="pop d2">
+              <rect x="232" y="86" width="62" height="20" rx="10" fill="url(#mg)"/>
+              <text class="lbl" x="263" y="100" text-anchor="middle" font-size="10" fill="#10040C">Spin it</text>
+            </g>
+            <!-- vibe chips -->
+            <g class="pop d3" transform="translate(14,132)">
+              <rect x="0" y="0" width="74" height="24" rx="12" fill="rgba(255,46,151,.16)" stroke="rgba(255,46,151,.5)"/>
+              <circle cx="14" cy="12" r="3.5" fill="#FF2E97"/>
+              <text class="lbl" x="26" y="16" font-size="9.5" fill="#F6F4FF">Sunset</text>
+            </g>
+            <g class="pop d3" transform="translate(96,132)">
+              <rect x="0" y="0" width="86" height="24" rx="12" fill="rgba(46,168,255,.14)" stroke="rgba(46,168,255,.45)"/>
+              <circle cx="14" cy="12" r="3.5" fill="#2EA8FF"/>
+              <text class="lbl" x="26" y="16" font-size="9.5" fill="#F6F4FF">Slow build</text>
+            </g>
+            <g class="pop d4" transform="translate(190,132)">
+              <rect x="0" y="0" width="92" height="24" rx="12" fill="rgba(255,255,255,.05)" stroke="rgba(255,255,255,.14)"/>
+              <text class="meta" x="14" y="16" font-size="13" fill="#B4B0CC">+</text>
+              <text class="lbl" x="28" y="16" font-size="9.5" fill="#B4B0CC">add a vibe</text>
+            </g>
+            <text class="meta" x="14" y="178" font-size="8" fill="#6a6580">you talk to it · it does the crate-digging</text>
+          </svg>
+        </div>
+      </article>
 
-      <div class="glass step reveal">
-        <span class="idx">04</span>
-        <svg class="glyph" viewBox="0 0 44 44" fill="none" aria-hidden="true">
-          <path d="M11 33V20M22 33V11M33 33V24" stroke="url(#mg)" stroke-width="2.6" stroke-linecap="round"/>
-          <circle cx="22" cy="11" r="2.8" fill="#3DFF88"/>
-          <path d="M11 20l11-9 11 13" stroke="#3DFF88" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" opacity=".5"/>
-        </svg>
-        <h3>Steer it live</h3>
-        <p>Tap a quick-prompt or let the <em>mic energy meter</em> read the room. The edit lands at the next phrase boundary, no dropout.</p>
-      </div>
+      <!-- ===== FRAME 03: It conducts ===== -->
+      <article class="frame reveal">
+        <span class="node" aria-hidden="true">3</span>
+        <div class="frame-copy">
+          <span class="ftag"><span class="d"></span>Frame 03 · Doremix</span>
+          <h3>It conducts</h3>
+          <p>An LLM writes a <em>cue sheet</em>; a deterministic engine plays it. Two decks, beatmatched and harmonic, riding one rising energy curve from warm-up to the drop.</p>
+          <span class="reinforce"><svg class="lk" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 18C9 18 9 6 12 6s3 12 9 12" stroke="#FFB627" stroke-width="2" stroke-linecap="round"/></svg>A beatmatched set, built for you.</span>
+        </div>
+        <div class="frame-art">
+          <svg class="scene" viewBox="0 0 320 200" role="img" aria-label="A rising spectrum energy curve over two decks, with a cue-sheet sliver and a beatmatched transition marker.">
+            <defs>
+              <linearGradient id="f3area" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2EA8FF" stop-opacity=".26"/><stop offset="1" stop-color="#9B5CFF" stop-opacity="0"/></linearGradient>
+            </defs>
+            <!-- rising energy curve -->
+            <path d="M14 132 C70 128 96 118 140 96 C188 72 214 44 306 30 L306 150 L14 150 Z" fill="url(#f3area)"/>
+            <path class="draw dl360" d="M14 132 C70 128 96 118 140 96 C188 72 214 44 306 30" fill="none" stroke="url(#mg)" stroke-width="3" stroke-linecap="round"/>
+            <!-- beatmatched transition marker at the crossfade -->
+            <g class="pop d2">
+              <line x1="160" y1="30" x2="160" y2="150" stroke="rgba(61,255,136,.5)" stroke-width="1.2" stroke-dasharray="3 3"/>
+              <rect x="138" y="20" width="44" height="14" rx="7" fill="rgba(10,10,18,.85)" stroke="rgba(61,255,136,.4)"/>
+              <text class="meta" x="160" y="30" text-anchor="middle" font-size="7.5" fill="#3DFF88">beatmatch</text>
+            </g>
+            <!-- two little decks -->
+            <g class="pop d1" transform="translate(14,158)">
+              <rect x="0" y="0" width="120" height="34" rx="8" fill="rgba(255,255,255,.05)" stroke="rgba(255,255,255,.12)"/>
+              <circle cx="17" cy="17" r="10" fill="none" stroke="#2EE6C4" stroke-width="2"/><circle cx="17" cy="17" r="2.5" fill="#2EE6C4"/>
+              <text class="lbl" x="34" y="15" font-size="8.5" fill="#F6F4FF">Deck A</text>
+              <text class="meta" x="34" y="27" font-size="7.5" fill="#2EE6C4">124 · 8A</text>
+            </g>
+            <g class="pop d3" transform="translate(186,158)">
+              <rect x="0" y="0" width="120" height="34" rx="8" fill="rgba(255,255,255,.05)" stroke="rgba(255,255,255,.12)"/>
+              <circle cx="17" cy="17" r="10" fill="none" stroke="#FF2E97" stroke-width="2"/><circle cx="17" cy="17" r="2.5" fill="#FF2E97"/>
+              <text class="lbl" x="34" y="15" font-size="8.5" fill="#F6F4FF">Deck B</text>
+              <text class="meta" x="34" y="27" font-size="7.5" fill="#FF2E97">126 · 9A</text>
+            </g>
+            <!-- cue-sheet sliver -->
+            <g class="pop d2" transform="translate(212,40)">
+              <rect x="0" y="0" width="94" height="60" rx="7" fill="rgba(10,10,18,.7)" stroke="rgba(255,255,255,.12)"/>
+              <text class="meta" x="8" y="13" font-size="7" fill="#B4B0CC">cue_sheet.json</text>
+              <line x1="8" y1="18" x2="86" y2="18" stroke="rgba(255,255,255,.10)"/>
+              <text class="meta" x="8" y="30" font-size="7" fill="#2EE6C4">00:00 warmup</text>
+              <text class="meta" x="8" y="41" font-size="7" fill="#FFB627">12:30 build</text>
+              <text class="meta" x="8" y="52" font-size="7" fill="#FF2E97">21:00 drop</text>
+            </g>
+          </svg>
+        </div>
+      </article>
+
+      <!-- ===== FRAME 04: Steer it live ===== -->
+      <article class="frame reveal">
+        <span class="node" aria-hidden="true">4</span>
+        <div class="frame-copy">
+          <span class="ftag"><span class="d"></span>Frame 04 · You + Doremix</span>
+          <h3>Steer it live</h3>
+          <p>Mid-set, tap a quick-prompt and the curve <em>bends to your call</em>. A mic energy meter reads the room. The edit lands at the next phrase boundary, no dropout.</p>
+          <span class="reinforce"><svg class="lk" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 16C9 16 8 8 12 8" stroke="#FF2E97" stroke-width="2" stroke-linecap="round"/><path d="M12 8c4 0 4 -3 8 -3" stroke="#FF2E97" stroke-width="2" stroke-linecap="round"/></svg>You re-steer it without missing a beat.</span>
+        </div>
+        <div class="frame-art">
+          <svg class="scene" viewBox="0 0 320 200" role="img" aria-label="Quick-prompt chips bending the energy curve upward, with a small mic energy meter.">
+            <defs>
+              <linearGradient id="f4area" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FF2E97" stop-opacity=".24"/><stop offset="1" stop-color="#9B5CFF" stop-opacity="0"/></linearGradient>
+            </defs>
+            <!-- quick-prompt chips -->
+            <g class="pop d1" transform="translate(14,18)">
+              <rect x="0" y="0" width="104" height="24" rx="12" fill="url(#mg)"/>
+              <text class="lbl" x="52" y="16" text-anchor="middle" font-size="9.5" fill="#10040C">keep it upbeat</text>
+            </g>
+            <g class="pop d2" transform="translate(126,18)">
+              <rect x="0" y="0" width="86" height="24" rx="12" fill="rgba(255,255,255,.05)" stroke="rgba(255,255,255,.14)"/>
+              <text class="lbl" x="43" y="16" text-anchor="middle" font-size="9.5" fill="#B4B0CC">cool it down</text>
+            </g>
+            <!-- original vs steered curve -->
+            <path d="M14 120 C70 118 104 112 150 104 C196 96 230 92 306 90" fill="none" stroke="rgba(255,255,255,.18)" stroke-width="2" stroke-dasharray="4 4"/>
+            <path d="M14 120 C70 116 104 104 150 92 C196 80 230 56 306 44 L306 150 L14 150 Z" fill="url(#f4area)"/>
+            <path class="draw dl360" d="M14 120 C70 116 104 104 150 92 C196 80 230 56 306 44" fill="none" stroke="url(#mg)" stroke-width="3" stroke-linecap="round"/>
+            <!-- "bends up" arrow -->
+            <g class="pop d3">
+              <path d="M214 78 q14 -14 30 -22" fill="none" stroke="#FF2E97" stroke-width="1.6" stroke-linecap="round"/>
+              <path d="M244 56l1 9 -9 -2z" fill="#FF2E97"/>
+            </g>
+            <!-- mic energy meter -->
+            <g class="pop d4" transform="translate(14,158)">
+              <rect x="0" y="0" width="292" height="34" rx="8" fill="rgba(255,255,255,.05)" stroke="rgba(255,255,255,.12)"/>
+              <circle cx="18" cy="17" r="8" fill="none" stroke="#3DFF88" stroke-width="2"/>
+              <rect x="15" y="11" width="6" height="9" rx="3" fill="#3DFF88"/><path d="M18 22v3" stroke="#3DFF88" stroke-width="1.6"/>
+              <text class="meta" x="34" y="14" font-size="7.5" fill="#B4B0CC">mic · room energy</text>
+              <g transform="translate(34,18)">
+                <rect x="0" y="0" width="4" height="9" rx="1" fill="#2EE6C4"/><rect x="7" y="-3" width="4" height="12" rx="1" fill="#2EE6C4"/><rect x="14" y="-6" width="4" height="15" rx="1" fill="#2EA8FF"/><rect x="21" y="-2" width="4" height="11" rx="1" fill="#2EA8FF"/><rect x="28" y="-8" width="4" height="17" rx="1" fill="#FFB627"/><rect x="35" y="-4" width="4" height="13" rx="1" fill="#FFB627"/><rect x="42" y="-9" width="4" height="18" rx="1" fill="#FF2E97"/><rect x="49" y="-1" width="4" height="10" rx="1" fill="#FF2E97"/>
+              </g>
+              <text class="meta" x="232" y="22" font-size="9" fill="#3DFF88">+18%</text>
+            </g>
+          </svg>
+        </div>
+      </article>
     </div>
   </div>
 </section>
@@ -1816,6 +2108,18 @@
       var key=c.getAttribute('data-vibe');
       typeInto(VIBES[key].ph, function(){ drawSet(key); });
     }); });
+  } catch(e){}
+
+  /* "Spin it" — (re)draw the set for whatever vibe is active right now */
+  try {
+    var hpSpin = document.getElementById('hpSpin');
+    if(hpSpin){
+      hpSpin.addEventListener('click', function(){
+        var key = (activeVibe && VIBES[activeVibe]) ? activeVibe : 'rooftop';
+        pcAutoFired = true; // user drove it; don't also auto-fire
+        drawSet(key);
+      });
+    }
   } catch(e){}
 
   // baseline: render the default vibe statically right now (no JS gating of content)
