@@ -20,9 +20,24 @@ const QUICK_PROMPTS: { label: string; text: string }[] = [
  * chips + free text + the animated mic ENERGY meter.
  */
 export function VibeChat({ setId, chat }: { setId: string; chat: ChatMessage[] }) {
-  const { reprompt, micEnergy, isPlaying } = useSession();
+  const { reprompt, micEnergy, isPlaying, micEnabled, enableMic, disableMic, engineMode } =
+    useSession();
   const [text, setText] = useState("");
+  const [micBusy, setMicBusy] = useState(false);
+  const [micDenied, setMicDenied] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  async function toggleMic() {
+    if (micEnabled) {
+      disableMic();
+      return;
+    }
+    setMicBusy(true);
+    setMicDenied(false);
+    const ok = await enableMic();
+    setMicBusy(false);
+    if (!ok) setMicDenied(true);
+  }
 
   useEffect(() => {
     const el = scrollRef.current;
@@ -104,6 +119,37 @@ export function VibeChat({ setId, chat }: { setId: string; chat: ChatMessage[] }
 
       <div className="mt-3 border-t border-white/10 pt-3">
         <EnergyMeter value={micEnergy} />
+        <div className="mt-2 flex items-center justify-between">
+          <button
+            type="button"
+            onClick={toggleMic}
+            disabled={micBusy || engineMode !== "live"}
+            className={`rounded-full border px-2.5 py-1 font-mono text-[10px] uppercase tracking-wide transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
+              micEnabled
+                ? "border-live/40 bg-live/10 text-live"
+                : "border-white/12 bg-white/5 text-mist hover:text-paper"
+            }`}
+            title={
+              engineMode !== "live"
+                ? "Mic is available in live mode (real audio + key)"
+                : micEnabled
+                  ? "Stop using the room mic"
+                  : "Use the room mic to feed the energy meter"
+            }
+          >
+            {micBusy
+              ? "starting mic…"
+              : micEnabled
+                ? "● mic on"
+                : "use room mic"}
+          </button>
+          {micDenied && (
+            <span className="font-mono text-[10px] text-magenta">mic blocked</span>
+          )}
+          {!micEnabled && !micDenied && engineMode === "live" && (
+            <span className="font-mono text-[10px] text-mist/60">simulated</span>
+          )}
+        </div>
       </div>
     </div>
   );

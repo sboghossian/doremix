@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSession, fileToTrack } from "@/store/SessionContext";
+import { importScreenshot } from "@/conductor/screenshotImport";
 import type { DoremixSet, PlaylistMatch, Track } from "@/types";
 import { SetThumbnail } from "@/components/SetThumbnail";
 import { TrackChips } from "@/components/TrackChips";
@@ -132,11 +133,39 @@ function GlobalCrate() {
   const [dragOver, setDragOver] = useState(false);
   const [paste, setPaste] = useState("");
   const [matches, setMatches] = useState<PlaylistMatch[] | null>(null);
+  const [shotBusy, setShotBusy] = useState(false);
+  const [shotNote, setShotNote] = useState<string | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
+  const shotInput = useRef<HTMLInputElement>(null);
 
   function ingest(files: FileList | File[]) {
-    const tracks: Track[] = Array.from(files).map((f) => fileToTrack(f.name));
+    // Keep the real File on each Track so the RealEngine can decode it.
+    const tracks: Track[] = Array.from(files)
+      .filter((f) => /\.(mp3|wav|flac|m4a|aiff|ogg)$/i.test(f.name) || f.type.startsWith("audio/"))
+      .map((f) => fileToTrack(f.name, f));
     if (tracks.length > 0) addTracks(tracks);
+  }
+
+  /**
+   * Upload a playlist screenshot → vision model reads the songs → feed the
+   * names through the SAME fuzzy matcher the pasted-text import uses, so the
+   * matched/not-in-crate UI below renders identically.
+   */
+  async function ingestScreenshot(file: File) {
+    setShotBusy(true);
+    setShotNote(null);
+    const res = await importScreenshot(file);
+    setShotBusy(false);
+    if (!res.ok) {
+      setShotNote(res.message);
+      return;
+    }
+    const text = res.tracks
+      .map((t) => (t.artist ? `${t.artist} - ${t.title}` : t.title))
+      .join("\n");
+    setPaste(text);
+    setMatches(importPlaylistText(text));
+    setShotNote(`Read ${res.tracks.length} songs from the screenshot.`);
   }
 
   const matchedCount = matches?.filter((m) => m.matched).length ?? 0;
@@ -194,7 +223,7 @@ function GlobalCrate() {
             />
           </div>
 
-          {/* Spotify match */}
+          {/* Spotify match — paste a tracklist OR upload a screenshot */}
           <div className="mt-4 flex flex-col gap-3 md:flex-row">
             <textarea
               value={paste}
@@ -202,13 +231,40 @@ function GlobalCrate() {
               placeholder={"Salt Air - Mara Vance\nMarble Run - Tessellate\nPhosphor - VYL"}
               className="h-24 flex-1 resize-none rounded-glass border border-white/12 bg-black/30 p-3 font-mono text-xs text-paper outline-none focus:border-cyan/50 scroll-thin"
             />
-            <button
-              onClick={() => paste.trim() && setMatches(importPlaylistText(paste))}
-              className="btn-spectrum h-fit px-4 py-2 text-sm md:w-44"
-            >
-              Match playlist
-            </button>
+            <div className="flex flex-col gap-2 md:w-44">
+              <button
+                type="button"
+                onClick={() => paste.trim() && setMatches(importPlaylistText(paste))}
+                className="btn-spectrum h-fit px-4 py-2 text-sm"
+              >
+                Match playlist
+              </button>
+              <button
+                type="button"
+                onClick={() => shotInput.current?.click()}
+                disabled={shotBusy}
+                className="btn-ghost h-fit px-4 py-2 text-sm disabled:opacity-50"
+                title="Read a Spotify/playlist screenshot with your OpenRouter key"
+              >
+                {shotBusy ? "reading…" : "Upload screenshot"}
+              </button>
+              <input
+                ref={shotInput}
+                type="file"
+                accept="image/png,image/jpeg,image/webp,image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) void ingestScreenshot(f);
+                  e.target.value = "";
+                }}
+              />
+            </div>
           </div>
+
+          {shotNote && (
+            <p className="mt-2 font-mono text-[11px] text-mist animate-fade-in">{shotNote}</p>
+          )}
 
           {matches && (
             <div className="mt-3 animate-fade-in">

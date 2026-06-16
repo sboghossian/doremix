@@ -4,8 +4,11 @@ import type { Track } from "@/types";
  * ~12 fake-but-plausible electronic tracks (house / techno / disco / afro).
  * BPM 120–128, Camelot keys, energy 0..1. These seed the local library so the
  * prototype has something to mix the moment you open it.
+ *
+ * All carry `isDemo: true` (applied at export) and have NO audio bytes — the
+ * RealEngine skips them; only real dropped-in files trigger live audio.
  */
-export const MOCK_LIBRARY: Track[] = [
+const MOCK_LIBRARY_RAW: Track[] = [
   {
     id: "lib:8a31f",
     title: "Lantern Hours",
@@ -151,6 +154,12 @@ export const MOCK_LIBRARY: Track[] = [
     hasVocals: false,
   },
 ];
+
+/** The seeded demo crate, every track flagged `isDemo` (no audio bytes). */
+export const MOCK_LIBRARY: Track[] = MOCK_LIBRARY_RAW.map((t) => ({
+  ...t,
+  isDemo: true,
+}));
 
 /** Format seconds as m:ss. */
 export function fmtDuration(seconds: number): string {

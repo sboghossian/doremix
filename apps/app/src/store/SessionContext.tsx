@@ -18,9 +18,17 @@ import type {
 } from "@/types";
 import { MockConductor, MockEngine } from "@/core";
 import type { Conductor, Engine } from "@/core";
+import { RealEngine } from "@/engine";
+// Conductor seam: the real (OpenRouter) conductor. It implements the same
+// Conductor interface; its async LLM results stream back via setCallbacks.
+import { RealConductor, type ConductorUpdate } from "@/conductor";
 import { MOCK_LIBRARY } from "@/data/mockLibrary";
 import { hashStr, shortId } from "@/lib/util";
+import { hasOpenRouterKey } from "./settings";
 import { loadSets, newSetId, saveSets } from "./setsStorage";
+
+/** Whether the engine driving playback is the real Web Audio one (vs the mock). */
+export type EngineMode = "demo" | "live";
 
 export interface RepromptEvent {
   id: string;
@@ -49,6 +57,20 @@ interface SessionState {
   engine: Engine;
   conductor: Conductor;
 
+  /** "live" once the real engine is driving (real audio + key); else "demo". */
+  engineMode: EngineMode;
+  /** true if the user has at least one real (file-bearing) track loaded */
+  hasRealAudio: boolean;
+  /** true if a BYO OpenRouter key is stored */
+  hasKey: boolean;
+  /** re-read the stored key (call after the Settings modal saves) */
+  refreshKey: () => void;
+
+  /** mic capture is opt-in; these only do anything in live mode */
+  micEnabled: boolean;
+  enableMic: () => Promise<boolean>;
+  disableMic: () => void;
+
   // ---- library (global crate source) ----
   addTracks: (tracks: Track[]) => void;
   importPlaylistText: (text: string) => PlaylistMatch[];
@@ -76,13 +98,22 @@ interface SessionState {
 
 const Ctx = createContext<SessionState | null>(null);
 
-/** Turn dropped filenames into plausible analyzed tracks. */
-function fileToTrack(name: string): Track {
+/**
+ * Turn a dropped file into a Track. When passed the real `File`, the audio
+ * bytes ride along (`file`) and the track is REAL (`isDemo` false,
+ * `analyzed` false until the engine decodes+analyzes it). Metadata is heuristic
+ * until real analysis overwrites bpm/energy/duration.
+ *
+ * The name-only overload keeps the old demo behaviour (synthetic analyzed track)
+ * for any caller that doesn't have the File.
+ */
+function fileToTrack(name: string, file?: File): Track {
   const clean = name.replace(/\.(mp3|wav|flac|m4a|aiff|ogg)$/i, "");
   const parts = clean.split(/\s+-\s+/);
   const artist = parts.length > 1 ? parts[0] : "Unknown";
   const title = parts.length > 1 ? parts.slice(1).join(" - ") : clean;
-  const seed = hashStr(clean);
+  // include size in the seed so two files with the same name don't collide.
+  const seed = hashStr(file ? `${clean}:${file.size}` : clean);
   const genres = ["house", "techno", "disco", "afro"] as const;
   const keysA = [
     "8A",
@@ -98,8 +129,8 @@ function fileToTrack(name: string): Track {
     "12B",
     "1B",
   ] as const;
-  return {
-    id: `lib:${(seed >>> 0).toString(16).slice(0, 5)}`,
+  const base: Track = {
+    id: `lib:${(seed >>> 0).toString(16).slice(0, 6)}`,
     title,
     artist,
     genre: genres[seed % genres.length],
@@ -107,9 +138,16 @@ function fileToTrack(name: string): Track {
     key: keysA[seed % keysA.length],
     energy: 0.3 + ((seed >> 4) % 70) / 100,
     duration: 300 + ((seed >> 8) % 200),
-    analyzed: true,
+    analyzed: !file, // demo tracks are "analyzed"; real ones aren't until decoded
     hasVocals: (seed & 1) === 0,
   };
+  if (file) {
+    base.file = file;
+    base.isDemo = false;
+  } else {
+    base.isDemo = true;
+  }
+  return base;
 }
 
 function makeMessage(role: ChatMessage["role"], text: string): ChatMessage {
@@ -146,8 +184,20 @@ function sortByTouched(sets: DoremixSet[]): DoremixSet[] {
 }
 
 export function SessionProvider({ children }: { children: ReactNode }) {
-  const engineRef = useRef<Engine>(new MockEngine());
-  const conductorRef = useRef<Conductor>(new MockConductor());
+  // Two engines live for the whole session; `activeEngine` points at whichever
+  // drives the open set. Demo sets (seeded, no audio) use the mock; sets with
+  // real dropped-in audio + a stored key use the real Web Audio engine.
+  const mockEngineRef = useRef<MockEngine>(new MockEngine());
+  const realEngineRef = useRef<RealEngine>(new RealEngine());
+  const activeEngineRef = useRef<Engine>(mockEngineRef.current);
+
+  // Two conductors: the deterministic mock (demo path) and the real
+  // OpenRouter-backed planner (live path). The real one returns a heuristic
+  // sheet synchronously and streams the refined LLM sheet back via callbacks
+  // (wired below) → engine.update + chat, exactly like the mock's sync result.
+  const mockConductorRef = useRef<MockConductor>(new MockConductor());
+  const realConductorRef = useRef<RealConductor>(new RealConductor());
+  const activeConductorRef = useRef<Conductor>(mockConductorRef.current);
 
   const [library, setLibrary] = useState<Track[]>(MOCK_LIBRARY);
   const [sets, setSets] = useState<DoremixSet[]>(() => sortByTouched(loadSets()));
@@ -155,11 +205,15 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [micEnergy, setMicEnergy] = useState(0.3);
   const [reprompts, setReprompts] = useState<RepromptEvent[]>([]);
+  const [engineMode, setEngineMode] = useState<EngineMode>("demo");
+  const [hasKey, setHasKey] = useState(false);
+  const [micEnabled, setMicEnabled] = useState(false);
 
   /** the set currently loaded into the engine */
   const activeIdRef = useRef<string | null>(null);
   const setsRef = useRef<DoremixSet[]>(sets);
   const reportRef = useRef<StateReport | null>(null);
+  const hasKeyRef = useRef(false);
 
   useEffect(() => {
     setsRef.current = sets;
@@ -168,23 +222,78 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     reportRef.current = report;
   }, [report]);
 
-  // Persist sets to localStorage on every change.
+  // any real (file-bearing) track in the library?
+  const hasRealAudio = useMemo(
+    () => library.some((t) => t.file != null && !t.isDemo),
+    [library],
+  );
+  const hasRealAudioRef = useRef(hasRealAudio);
+  useEffect(() => {
+    hasRealAudioRef.current = hasRealAudio;
+  }, [hasRealAudio]);
+
+  // Read the stored OpenRouter key on mount + expose a refresher for Settings.
+  const refreshKey = useCallback(() => {
+    void hasOpenRouterKey().then((present) => {
+      hasKeyRef.current = present;
+      setHasKey(present);
+    });
+  }, []);
+  useEffect(() => {
+    refreshKey();
+  }, [refreshKey]);
+
+  // Persist sets to localStorage on every change (File handles are stripped in setsStorage).
   useEffect(() => {
     saveSets(sets);
   }, [sets]);
 
-  // Subscribe to engine state reports.
+  /** Subscribe to BOTH engines; route reports from whichever is active. */
   useEffect(() => {
-    const engine = engineRef.current;
-    const off = engine.on((r) => {
+    const onReport = (engine: Engine) => (r: StateReport) => {
+      if (activeEngineRef.current !== engine) return;
       setReport(r);
       setIsPlaying(engine.isPlaying());
       setMicEnergy(engine.micEnergy());
-    });
-    return () => {
-      off();
-      engine.dispose();
     };
+    const mock = mockEngineRef.current;
+    const real = realEngineRef.current;
+    const offMock = mock.on(onReport(mock));
+    const offReal = real.on(onReport(real));
+    return () => {
+      offMock();
+      offReal();
+      mock.dispose();
+      real.dispose();
+    };
+  }, []);
+
+  /**
+   * Decide which engine/conductor should drive a given crate pool, and point
+   * the active refs at it. Real engine wins only when the pool actually has
+   * decodable audio AND a key is stored — otherwise the deployed demo + seeded
+   * example sets keep working on the mock.
+   */
+  const selectImplFor = useCallback((pool: Track[]): EngineMode => {
+    const poolHasRealAudio = pool.some((t) => t.file != null && !t.isDemo);
+    const live = poolHasRealAudio && hasKeyRef.current;
+    activeEngineRef.current = live ? realEngineRef.current : mockEngineRef.current;
+    activeConductorRef.current = live
+      ? realConductorRef.current
+      : mockConductorRef.current;
+    setEngineMode(live ? "live" : "demo");
+    return live ? "live" : "demo";
+  }, []);
+
+  const enableMic = useCallback(async (): Promise<boolean> => {
+    const ok = await realEngineRef.current.enableMic();
+    setMicEnabled(ok);
+    return ok;
+  }, []);
+
+  const disableMic = useCallback(() => {
+    realEngineRef.current.disableMic();
+    setMicEnabled(false);
   }, []);
 
   /** mutate one set + bump updatedAt + re-sort, in a single state write */
@@ -199,12 +308,88 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     [],
   );
 
+  /**
+   * Wire the real conductor's ASYNC results back into the app. Because the
+   * Conductor interface is synchronous, `planSet`/`reprompt` already returned a
+   * heuristic sheet (the engine is playing it); when the LLM produces a better
+   * one it arrives here and we swap the engine to it (same double-buffer path a
+   * live re-steer uses) + log the conductor's richer line. `onMessage` is the
+   * friendly status/error channel (no key, API error). Both are no-ops unless
+   * the update still matches the set currently loaded into the engine.
+   */
+  useEffect(() => {
+    const conductor = realConductorRef.current;
+    const applyUpdate = (update: ConductorUpdate) => {
+      const id = activeIdRef.current;
+      if (!id) return;
+      const target = setsRef.current.find((s) => s.id === id);
+      // ignore stale results whose plan no longer matches the live set
+      if (!target?.cueSheet || target.cueSheet.plan_id !== update.sheet.plan_id) return;
+      if (update.sheet.version < target.cueSheet.version) return;
+
+      activeEngineRef.current.update(update.sheet);
+      patchSet(id, (s) => ({
+        ...s,
+        cueSheet: update.sheet,
+        chat: update.message
+          ? [...s.chat, makeMessage("conductor", update.message)]
+          : s.chat,
+      }));
+
+      if (update.kind === "reprompt") {
+        const evt: RepromptEvent = {
+          id: `${update.sheet.version}-llm-${Date.now()}`,
+          label: "planner",
+          fromVersion: target.cueSheet.version,
+          toVersion: update.sheet.version,
+          status: "applied",
+          atBar: update.sheet.valid_from_bar,
+          ts: Date.now(),
+        };
+        setReprompts((prev) => [evt, ...prev].slice(0, 6));
+      }
+    };
+    const applyMessage = (text: string) => {
+      const id = activeIdRef.current;
+      if (!id) return;
+      patchSet(id, (s) => ({ ...s, chat: [...s.chat, makeMessage("conductor", text)] }));
+    };
+    conductor.setCallbacks({ onUpdate: applyUpdate, onMessage: applyMessage });
+    return () => conductor.setCallbacks({});
+  }, [patchSet]);
+
   const addTracks = useCallback((tracks: Track[]) => {
+    let added: Track[] = [];
     setLibrary((prev) => {
       const seen = new Set(prev.map((t) => t.id));
-      const fresh = tracks.filter((t) => !seen.has(t.id));
-      return [...prev, ...fresh];
+      added = tracks.filter((t) => !seen.has(t.id));
+      return [...prev, ...added];
     });
+
+    // For REAL tracks (carry a File), decode + analyze in the background and
+    // patch the library row with the detected BPM/energy/duration. Failures are
+    // silent: the heuristic metadata stays and the track is still usable.
+    for (const t of added) {
+      if (!t.file) continue;
+      void realEngineRef.current
+        .analyzeTrack(t.id, t.file as Blob & { name?: string })
+        .then((meta) => {
+          if (!meta) return;
+          setLibrary((prev) =>
+            prev.map((row) =>
+              row.id === t.id
+                ? {
+                    ...row,
+                    bpm: Math.round(meta.bpm),
+                    energy: meta.energy,
+                    duration: Math.round(meta.duration),
+                    analyzed: true,
+                  }
+                : row,
+            ),
+          );
+        });
+    }
   }, []);
 
   const importPlaylistText = useCallback(
@@ -254,7 +439,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const deleteSet = useCallback((id: string) => {
     if (activeIdRef.current === id) {
       activeIdRef.current = null;
-      engineRef.current.pause();
+      activeEngineRef.current.pause();
       setReport(null);
       setIsPlaying(false);
       setReprompts([]);
@@ -288,35 +473,42 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const openSet = useCallback(
     (id: string) => {
       if (activeIdRef.current === id) return;
+      // pause whatever was playing before we (maybe) switch engine implementations.
+      activeEngineRef.current.pause();
       activeIdRef.current = id;
       const target = setsRef.current.find((s) => s.id === id);
-      const engine = engineRef.current;
+      const crateTracks = library.filter((t) => target?.crate.includes(t.id) ?? false);
       setReprompts([]);
+      // pick mock vs real for THIS set's pool, then drive the chosen engine.
+      selectImplFor(crateTracks);
+      const engine = activeEngineRef.current;
       if (target?.cueSheet) {
-        const crateTracks = library.filter((t) => target.crate.includes(t.id));
         engine.load(crateTracks);
         engine.play(target.cueSheet);
         engine.pause(); // restore paused; the workspace transport resumes it
         setIsPlaying(false);
       } else {
-        engine.pause();
         setReport(null);
         setIsPlaying(false);
       }
     },
-    [library],
+    [library, selectImplFor],
   );
 
   /** Spin a set: plan from its brief → cue sheet v1 → engine.play + reply. */
   const spin = useCallback(
     (id: string, brief: Brief) => {
-      const engine = engineRef.current;
-      const conductor = conductorRef.current;
       const target = setsRef.current.find((s) => s.id === id);
       const crateTracks = library.filter(
         (t) => target?.crate.includes(t.id) ?? false,
       );
       const pool = crateTracks.length > 0 ? crateTracks : library;
+
+      // pause the previously-active engine, then pick mock vs real for this pool.
+      activeEngineRef.current.pause();
+      selectImplFor(pool);
+      const engine = activeEngineRef.current;
+      const conductor = activeConductorRef.current;
 
       engine.load(pool);
       const sheet = conductor.planSet(brief, pool);
@@ -338,13 +530,13 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       engine.play(sheet);
       setIsPlaying(true);
     },
-    [library, patchSet],
+    [library, patchSet, selectImplFor],
   );
 
   const reprompt = useCallback(
     (id: string, label: string, text: string) => {
-      const engine = engineRef.current;
-      const conductor = conductorRef.current;
+      const engine = activeEngineRef.current;
+      const conductor = activeConductorRef.current;
       const target = setsRef.current.find((s) => s.id === id);
       const cur = target?.cueSheet ?? null;
       const rep = reportRef.current;
@@ -383,7 +575,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   );
 
   const togglePlay = useCallback(() => {
-    const engine = engineRef.current;
+    const engine = activeEngineRef.current;
     if (engine.isPlaying()) {
       engine.pause();
       setIsPlaying(false);
@@ -394,7 +586,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const seek = useCallback((bar: number) => {
-    engineRef.current.seek(bar);
+    activeEngineRef.current.seek(bar);
   }, []);
 
   const value = useMemo<SessionState>(
@@ -405,8 +597,15 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       isPlaying,
       micEnergy,
       reprompts,
-      engine: engineRef.current,
-      conductor: conductorRef.current,
+      engine: activeEngineRef.current,
+      conductor: activeConductorRef.current,
+      engineMode,
+      hasRealAudio,
+      hasKey,
+      refreshKey,
+      micEnabled,
+      enableMic,
+      disableMic,
       addTracks,
       importPlaylistText,
       getSet,
@@ -428,6 +627,13 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       isPlaying,
       micEnergy,
       reprompts,
+      engineMode,
+      hasRealAudio,
+      hasKey,
+      refreshKey,
+      micEnabled,
+      enableMic,
+      disableMic,
       addTracks,
       importPlaylistText,
       getSet,
