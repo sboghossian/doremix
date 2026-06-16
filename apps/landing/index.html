@@ -30,7 +30,8 @@
 <style>
   :root{
     --ink:#0A0A12; --ink-2:#10101C;
-    --glass:rgba(255,255,255,.06); --glass-2:rgba(255,255,255,.045);
+    /* glass is now a STATIC translucent fill (no live backdrop blur) */
+    --glass:rgba(20,20,32,.62); --glass-2:rgba(16,16,28,.54);
     --glass-border:rgba(255,255,255,.12); --glass-border-2:rgba(255,255,255,.08);
     --paper:#F6F4FF; --mist:#B4B0CC; --live:#3DFF88;
 
@@ -56,6 +57,8 @@
     --accent:#2EE6C4; --accent-2:#2EA8FF;
     --glow:rgba(46,230,196,.28);
     --beat-ms:740ms; --type-boost:1;
+    /* mesh heat: blobs warm + grow as energy rises (set in JS) */
+    --mesh-hot:0.16; --mesh-scale:1;
   }
 
   *{box-sizing:border-box;margin:0;padding:0}
@@ -65,48 +68,66 @@
     background:var(--ink); color:var(--paper);
     font-family:var(--body); line-height:1.5; font-size:16px; letter-spacing:-0.004em;
     -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
-    overflow-x:hidden; position:relative; cursor:none;
+    overflow-x:hidden; position:relative;
   }
-  @media (pointer:coarse){ body{cursor:auto} }
   ::selection{background:rgba(255,46,151,.32); color:#fff}
   a{color:inherit;text-decoration:none}
   svg{display:block}
   img{max-width:100%}
-  button{font-family:inherit; cursor:none}
-  @media (pointer:coarse){ button{cursor:pointer} }
+  button{font-family:inherit}
 
   /* ============================================================
-     LIVING VISUALIZER (B) - full-bleed canvas behind everything
+     LIVING BACKGROUND - CSS-only animated gradient mesh (cheap).
+     A few large radial-gradient blobs on GPU-compositable divs.
+     Only transform/opacity animate -> no per-frame repaint, no
+     live-blur glass, no canvas. This is "the room full of moving light."
      ============================================================ */
-  #viz{
-    position:fixed; inset:0; z-index:-4; display:block; width:100%; height:100%;
+  .mesh{position:fixed; inset:-12%; z-index:-4; pointer-events:none; overflow:hidden;
     background:
       radial-gradient(120% 90% at 30% 0%, #150d22 0%, transparent 55%),
       radial-gradient(120% 90% at 80% 100%, #0c1426 0%, transparent 55%),
       var(--ink);
   }
-  /* reduced-motion / no-JS fallback: a static spectrum bloom */
-  #vizFallback{
-    position:fixed; inset:0; z-index:-4; pointer-events:none; display:none;
-    background:
-      radial-gradient(60% 50% at 22% 26%, rgba(255,46,151,.40), transparent 60%),
-      radial-gradient(55% 50% at 78% 30%, rgba(155,92,255,.38), transparent 62%),
-      radial-gradient(60% 55% at 50% 92%, rgba(46,168,255,.32), transparent 62%),
-      radial-gradient(50% 45% at 82% 78%, rgba(46,230,196,.24), transparent 60%),
-      var(--ink);
-  }
-  /* vignette laid over the canvas, under content */
+  .blob{position:absolute; border-radius:50%; will-change:transform; filter:none;
+    opacity:calc(.42 + var(--mesh-hot)*.34);}
+  /* each blob is a soft radial fill (no blur filter needed - the gradient IS the softness) */
+  .blob.b1{width:62vmax; height:62vmax; left:-12vmax; top:-16vmax;
+    background:radial-gradient(circle at 50% 50%, rgba(255,46,151,.50), rgba(255,46,151,.16) 38%, transparent 66%);
+    animation:drift1 32s var(--ease) infinite alternate;}
+  .blob.b2{width:58vmax; height:58vmax; right:-14vmax; top:-10vmax;
+    background:radial-gradient(circle at 50% 50%, rgba(155,92,255,.48), rgba(155,92,255,.16) 38%, transparent 66%);
+    animation:drift2 38s var(--ease) infinite alternate;}
+  .blob.b3{width:54vmax; height:54vmax; left:8vmax; bottom:-18vmax;
+    background:radial-gradient(circle at 50% 50%, rgba(46,168,255,.42), rgba(46,168,255,.14) 38%, transparent 66%);
+    animation:drift3 44s var(--ease) infinite alternate;}
+  .blob.b4{width:46vmax; height:46vmax; right:2vmax; bottom:-12vmax;
+    background:radial-gradient(circle at 50% 50%, rgba(46,230,196,.34), rgba(46,230,196,.12) 40%, transparent 64%);
+    animation:drift4 36s var(--ease) infinite alternate;}
+  .blob.b5{width:40vmax; height:40vmax; left:36vmax; top:24vmax;
+    background:radial-gradient(circle at 50% 50%, rgba(255,182,39,.30), rgba(255,107,61,.12) 42%, transparent 64%);
+    animation:drift5 40s var(--ease) infinite alternate;}
+  /* the whole mesh subtly scales up with energy (one cheap transform on a wrapper) */
+  .mesh-inner{position:absolute; inset:0; will-change:transform;
+    transform:scale(var(--mesh-scale)); transition:transform .5s var(--ease)}
+  @keyframes drift1{from{transform:translate3d(0,0,0) scale(1)}to{transform:translate3d(7vmax,5vmax,0) scale(1.12)}}
+  @keyframes drift2{from{transform:translate3d(0,0,0) scale(1.05)}to{transform:translate3d(-6vmax,6vmax,0) scale(.92)}}
+  @keyframes drift3{from{transform:translate3d(0,0,0) scale(.95)}to{transform:translate3d(5vmax,-6vmax,0) scale(1.1)}}
+  @keyframes drift4{from{transform:translate3d(0,0,0) scale(1)}to{transform:translate3d(-5vmax,-4vmax,0) scale(1.14)}}
+  @keyframes drift5{from{transform:translate3d(0,0,0) scale(1)}to{transform:translate3d(4vmax,5vmax,0) scale(1.18)}}
+
+  /* vignette laid over the mesh, under content */
   .veil{position:fixed; inset:0; z-index:-3; pointer-events:none; background:
     radial-gradient(125% 80% at 50% -8%, transparent 38%, rgba(10,10,18,.55) 100%),
     linear-gradient(180deg, rgba(10,10,18,.30) 0%, rgba(10,10,18,.04) 28%, rgba(10,10,18,.12) 62%, rgba(10,10,18,.72) 100%)}
-  .grain{position:fixed; inset:0; z-index:-2; pointer-events:none; opacity:.05; mix-blend-mode:overlay;
+  /* static film grain (single tiny static element, no blend mode over moving content) */
+  .grain{position:fixed; inset:0; z-index:-2; pointer-events:none; opacity:.045;
     background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");}
 
-  /* full-screen DROP flash, fired on the peak beat */
-  .flash{position:fixed; inset:0; z-index:9000; pointer-events:none; opacity:0; mix-blend-mode:screen;
-    background:radial-gradient(120% 90% at 50% 44%,rgba(255,46,151,.55),rgba(155,92,255,.20) 52%,transparent 72%)}
+  /* full-screen DROP flash, fired on the peak beat (opacity only - cheap) */
+  .flash{position:fixed; inset:0; z-index:9000; pointer-events:none; opacity:0;
+    background:radial-gradient(120% 90% at 50% 44%,rgba(255,46,151,.42),rgba(155,92,255,.16) 52%,transparent 72%)}
   .flash.fire{animation:flashfire .55s var(--ease) 1}
-  @keyframes flashfire{0%{opacity:0}10%{opacity:.95}100%{opacity:0}}
+  @keyframes flashfire{0%{opacity:0}10%{opacity:.85}100%{opacity:0}}
 
   .wrap{max-width:var(--maxw); margin:0 auto; padding-inline:var(--pad); position:relative; z-index:1}
 
@@ -118,41 +139,30 @@
   @keyframes hue{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
   .defs{position:absolute; width:0; height:0; overflow:hidden}
 
-  /* ===================== CUSTOM JOG-WHEEL CURSOR (C) ===================== */
-  .jog{position:fixed; left:0; top:0; width:40px; height:40px; margin:-20px 0 0 -20px; z-index:9999; pointer-events:none; will-change:transform; mix-blend-mode:screen; transition:opacity .25s var(--ease)}
-  .jog svg{width:100%; height:100%}
-  .jog .ring{fill:none; stroke:var(--accent); stroke-width:1.4; opacity:.9}
-  .jog .ticks{stroke:var(--accent); stroke-width:1.4; opacity:.55}
-  .jog .core{fill:var(--accent)}
-  .jog .play{fill:none; stroke:var(--accent); stroke-width:1.5; opacity:.8}
-  .jog.spin svg{animation:jogspin var(--beat-ms) linear infinite}
-  @keyframes jogspin{to{transform:rotate(360deg)}}
-  body.grabbing .jog{transform:scale(.82)}
-  @media (pointer:coarse){ .jog{display:none} }
-
   /* a thin energy progress bar pinned to the very top */
   .topline{position:fixed; left:0; right:0; top:0; height:3px; z-index:300; pointer-events:none}
   .topline .fillbar{height:100%; width:0; background:var(--spectrum); background-size:100vw 100%; box-shadow:0 0 12px var(--glow)}
 
   /* ============================================================
-     THE SCROLL SPINE (C) - energy curve threads the page edge
+     THE SCROLL SPINE (C) - energy curve threads the page edge.
+     No blend mode, no blur filter on the playhead (replaced the
+     blurred glow halo with a static soft-fill circle).
      ============================================================ */
-  .spine{position:fixed; left:max(10px,calc((100vw - var(--maxw))/2 - 20px)); top:0; bottom:0; width:64px; z-index:40; pointer-events:none; mix-blend-mode:screen}
+  .spine{position:fixed; left:max(10px,calc((100vw - var(--maxw))/2 - 20px)); top:0; bottom:0; width:64px; z-index:40; pointer-events:none}
   .spine svg{width:100%; height:100%}
   .spine .track{fill:none; stroke:rgba(255,255,255,.10); stroke-width:2}
-  .spine .lit{fill:none; stroke:url(#spineGrad); stroke-width:3; stroke-linecap:round; filter:drop-shadow(0 0 6px var(--glow))}
+  .spine .lit{fill:none; stroke:url(#spineGrad); stroke-width:3; stroke-linecap:round}
   .spine .ph{fill:var(--live)}
-  .spine .phg{fill:var(--live); opacity:.32; filter:blur(4px)}
+  .spine .phg{fill:var(--live); opacity:.22}
   @media (max-width:1380px){ .spine{display:none} }
 
   /* ===================== NAV ===================== */
   nav{
     position:fixed; top:0; left:0; right:0; z-index:200; height:64px; display:flex; align-items:center;
-    -webkit-backdrop-filter:saturate(150%) blur(16px); backdrop-filter:saturate(150%) blur(16px);
-    background:rgba(10,10,18,.42); border-bottom:1px solid transparent;
+    background:rgba(10,10,18,.72); border-bottom:1px solid transparent;
     transition:border-color .25s var(--ease), background .25s var(--ease);
   }
-  nav.scrolled{border-bottom-color:var(--glass-border-2); background:rgba(10,10,18,.74)}
+  nav.scrolled{border-bottom-color:var(--glass-border-2); background:rgba(10,10,18,.88)}
   .nav-in{display:flex; align-items:center; gap:22px; width:100%; max-width:var(--maxw); margin:0 auto; padding-inline:var(--pad)}
   .brand{display:flex; align-items:center; gap:11px; font-family:var(--display); font-weight:600; font-size:20px; letter-spacing:-0.02em}
   .brand .mark{flex:none; filter:drop-shadow(0 0 9px rgba(155,92,255,.45))}
@@ -170,18 +180,17 @@
   .btn{
     display:inline-flex; align-items:center; justify-content:center; gap:9px;
     font-family:var(--display); font-weight:700; font-size:15px; letter-spacing:-0.01em;
-    padding:14px 24px; border-radius:14px; cursor:none; border:1px solid transparent;
+    padding:14px 24px; border-radius:14px; cursor:pointer; border:1px solid transparent;
     transition:transform .15s var(--ease), box-shadow .22s var(--ease), background-position .5s var(--ease), border-color .2s var(--ease);
     white-space:nowrap;
   }
-  @media (pointer:coarse){ .btn{cursor:pointer} }
   .btn-primary{
     color:#10040C; position:relative; isolation:isolate;
     background:var(--spectrum); background-size:200% 100%; background-position:0% 0;
     box-shadow:0 1px 0 rgba(255,255,255,.30) inset, 0 12px 44px -12px rgba(255,46,151,.58), 0 0 0 1px rgba(255,255,255,.05);
   }
   .btn-primary:hover{transform:translateY(-2px); background-position:100% 0; box-shadow:0 1px 0 rgba(255,255,255,.34) inset, 0 18px 56px -12px rgba(155,92,255,.72)}
-  .btn-ghost{background:var(--glass); border-color:var(--glass-border); color:var(--paper); -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px)}
+  .btn-ghost{background:var(--glass); border-color:var(--glass-border); color:var(--paper)}
   .btn-ghost:hover{border-color:rgba(255,255,255,.24); transform:translateY(-2px); box-shadow:0 12px 34px -16px rgba(46,168,255,.5)}
   .btn svg{flex:none}
 
@@ -200,7 +209,7 @@
   .mega{position:relative; z-index:3; width:100%; padding-inline:var(--pad); max-width:var(--maxw); margin:0 auto}
   .mega-line{position:relative; display:block; line-height:.82; font-family:var(--display);
     font-weight:600; letter-spacing:-0.04em; white-space:nowrap}
-  .mega-line .ch{display:inline-block; will-change:font-variation-settings,transform; font-variation-settings:"wght" 500}
+  .mega-line .ch{display:inline-block; will-change:font-variation-settings; font-variation-settings:"wght" 500}
   /* type SCALE rides --type-boost; weight floor + wave ride --energy (set per-char in JS) */
   .mega-line.l-vibe{font-size:calc(clamp(58px,15.5vw,232px) * var(--type-boost)); color:var(--paper)}
   .mega-line.l-your{font-size:calc(clamp(58px,15.5vw,232px) * var(--type-boost))}
@@ -231,8 +240,7 @@
     transition:box-shadow .3s var(--ease);
   }
   .deck-inner{
-    background:linear-gradient(180deg,rgba(18,18,30,.92),rgba(12,12,22,.96));
-    -webkit-backdrop-filter:blur(20px); backdrop-filter:blur(20px);
+    background:linear-gradient(180deg,rgba(18,18,30,.95),rgba(12,12,22,.97));
     border-radius:21px; padding:clamp(15px,2.6vw,22px);
   }
   .deck-rail{display:flex; align-items:center; justify-content:space-between; gap:14px; margin-bottom:15px}
@@ -250,10 +258,9 @@
   .deck-bpm b{font-family:var(--display); font-weight:700; font-size:16px; letter-spacing:-0.01em; color:var(--accent); transition:color .2s}
   .deck-bpm .u{font-size:10px; color:var(--mist)}
 
-  .fader{position:relative; height:64px; border-radius:16px; overflow:hidden; cursor:none;
+  .fader{position:relative; height:64px; border-radius:16px; overflow:hidden; cursor:pointer;
     background:linear-gradient(180deg,rgba(0,0,0,.5),rgba(0,0,0,.28)); border:1px solid var(--glass-border-2);
     touch-action:none; user-select:none; -webkit-user-select:none;}
-  @media (pointer:coarse){ .fader{cursor:pointer} }
   .fader-grad{position:absolute; inset:0; opacity:.92;
     background:linear-gradient(90deg, rgba(46,230,196,.16), rgba(46,168,255,.14) 38%, rgba(255,182,39,.18) 66%, rgba(255,46,151,.30));}
   .fader-grid{position:absolute; inset:0; display:flex; justify-content:space-between; padding:0 6px; pointer-events:none}
@@ -282,14 +289,13 @@
   .deck-foot .hint{font-family:var(--mono); font-size:11px; color:var(--mist); display:inline-flex; align-items:center; gap:7px}
   .deck-foot .hint .d{width:5px;height:5px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px var(--accent); transition:background .2s}
   .deck .spin{
-    margin-left:auto; display:inline-flex; align-items:center; gap:8px; cursor:none;
+    margin-left:auto; display:inline-flex; align-items:center; gap:8px; cursor:pointer;
     font-family:var(--display); font-weight:700; font-size:14px; color:#10040C;
     padding:11px 20px; border-radius:12px; border:1px solid rgba(255,255,255,.06);
     background:var(--spectrum); background-size:200% 100%; background-position:0 0;
     box-shadow:0 1px 0 rgba(255,255,255,.3) inset, 0 8px 28px -10px rgba(255,46,151,.6);
     transition:transform .15s var(--ease), background-position .5s var(--ease), box-shadow .22s var(--ease);
   }
-  @media (pointer:coarse){ .deck .spin{cursor:pointer} }
   .deck .spin:hover{transform:translateY(-1px); background-position:100% 0}
   .deck .spin:active{transform:translateY(0) scale(.98)}
 
@@ -322,24 +328,25 @@
   .lede{color:var(--mist); font-size:clamp(16px,2vw,18px); max-width:600px; line-height:1.55}
   .sec-head.center .lede{margin-inline:auto}
 
+  /* glass cards are now STATIC translucent fills (no backdrop blur) */
   .glass{
     background:var(--glass); border:1px solid var(--glass-border); border-radius:20px;
-    -webkit-backdrop-filter:blur(16px); backdrop-filter:blur(16px);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.05);
     transition:border-color .25s var(--ease), transform .25s var(--ease), box-shadow .25s var(--ease);
   }
   .glass:hover{border-color:rgba(255,255,255,.20); transform:translateY(-3px)}
 
-  /* scroll-drawn mini energy-curve divider */
+  /* scroll-drawn mini energy-curve divider (no blur filter) */
   .divider{position:relative; height:54px; margin:0 auto; max-width:var(--maxw); padding-inline:var(--pad)}
   .divider svg{width:100%; height:100%; overflow:visible}
-  .divider .dl{fill:none; stroke:url(#divGrad); stroke-width:2.5; stroke-linecap:round; filter:drop-shadow(0 0 6px rgba(46,168,255,.4))}
+  .divider .dl{fill:none; stroke:url(#divGrad); stroke-width:2.5; stroke-linecap:round}
 
   /* ===================== VIBE DJING EXPLAINER ===================== */
   .vibe{padding-block:clamp(28px,5vw,56px)}
   .parallel{
     display:grid; grid-template-columns:1fr auto 1fr; gap:clamp(18px,4vw,48px); align-items:center;
     background:var(--glass); border:1px solid var(--glass-border); border-radius:24px;
-    -webkit-backdrop-filter:blur(16px); backdrop-filter:blur(16px);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.05);
     padding:clamp(28px,4vw,44px) clamp(24px,4vw,48px); position:relative; overflow:hidden;
   }
   .parallel::before{content:""; position:absolute; inset:0; background:radial-gradient(120% 100% at 0% 0%,rgba(255,46,151,.10),transparent 55%),radial-gradient(120% 100% at 100% 100%,rgba(46,168,255,.10),transparent 55%); pointer-events:none}
@@ -359,8 +366,7 @@
   .pc-text{flex:1; min-height:30px; font-family:var(--body); font-size:clamp(16px,2.2vw,19px); line-height:1.5; color:var(--paper); outline:none; word-break:break-word}
   .pc-text:empty:before{content:attr(data-ph); color:var(--mist); opacity:.85}
   .pc-chips{display:flex; flex-wrap:wrap; gap:9px; margin-top:18px; padding-top:16px; border-top:1px solid var(--glass-border-2)}
-  .vchip{cursor:none; font-family:var(--display); font-weight:500; font-size:13px; color:var(--paper); padding:8px 14px; border-radius:999px; border:1px solid var(--glass-border); background:var(--glass); -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px); transition:border-color .16s var(--ease),background .16s var(--ease),transform .12s var(--ease),color .16s var(--ease); display:inline-flex; align-items:center; gap:7px}
-  @media (pointer:coarse){ .vchip{cursor:pointer} }
+  .vchip{cursor:pointer; font-family:var(--display); font-weight:500; font-size:13px; color:var(--paper); padding:8px 14px; border-radius:999px; border:1px solid var(--glass-border); background:var(--glass); transition:border-color .16s var(--ease),background .16s var(--ease),transform .12s var(--ease),color .16s var(--ease); display:inline-flex; align-items:center; gap:7px}
   .vchip:hover{border-color:rgba(255,255,255,.3); background:rgba(255,255,255,.1); transform:translateY(-1px)}
   .vchip.active{border-color:transparent; color:#10040C; background:var(--spectrum); background-size:160% 100%; box-shadow:0 6px 22px -10px rgba(255,46,151,.6)}
   .pc-preview{margin-top:18px; border-radius:14px; border:1px solid var(--glass-border-2); background:rgba(10,10,18,.42); overflow:hidden}
@@ -376,9 +382,8 @@
   .showcase{position:relative}
   .browserframe{
     position:relative; border-radius:18px; overflow:hidden; margin-top:46px;
-    background:linear-gradient(180deg,rgba(18,18,30,.74),rgba(12,12,22,.88));
+    background:linear-gradient(180deg,rgba(18,18,30,.92),rgba(12,12,22,.95));
     border:1px solid var(--glass-border);
-    -webkit-backdrop-filter:blur(18px); backdrop-filter:blur(18px);
     box-shadow:0 50px 130px -50px rgba(0,0,0,.92), 0 0 90px -26px rgba(155,92,255,.5);
     will-change:transform;
   }
@@ -389,8 +394,7 @@
   .bf-url{flex:1; max-width:340px; margin-left:8px; font-family:var(--mono); font-size:11px; color:var(--mist); background:rgba(0,0,0,.3); border:1px solid var(--glass-border-2); border-radius:8px; padding:5px 11px; display:flex; align-items:center; gap:7px}
   .bf-url .lock{width:9px;height:9px;color:var(--c-teal)}
   .bf-tabs{margin-left:auto; display:flex; gap:6px}
-  .bf-tab{font-family:var(--display); font-size:11.5px; font-weight:600; color:var(--mist); padding:6px 12px; border-radius:8px; cursor:none; border:1px solid transparent; transition:all .18s var(--ease)}
-  @media (pointer:coarse){ .bf-tab{cursor:pointer} }
+  .bf-tab{font-family:var(--display); font-size:11.5px; font-weight:600; color:var(--mist); padding:6px 12px; border-radius:8px; cursor:pointer; border:1px solid transparent; transition:all .18s var(--ease)}
   .bf-tab:hover{color:var(--paper)}
   .bf-tab.active{color:#10040C; background:var(--spectrum); background-size:160% 100%}
   .bf-screen{position:relative; min-height:430px; overflow:hidden; background:radial-gradient(120% 80% at 70% 0%,rgba(155,92,255,.12),transparent 55%),radial-gradient(100% 80% at 0% 100%,rgba(46,168,255,.1),transparent 55%)}
@@ -404,15 +408,14 @@
   .setcards{display:grid; grid-template-columns:repeat(4,1fr); gap:12px}
   .setcard{border-radius:14px; border:1px solid var(--glass-border-2); background:var(--glass-2); padding:0; overflow:hidden; position:relative; transition:transform .2s var(--ease), box-shadow .2s var(--ease), border-color .2s var(--ease)}
   .setcard:hover{transform:translateY(-3px); box-shadow:0 18px 40px -22px rgba(155,92,255,.6)}
-  .setcard.newcard{display:flex; flex-direction:column; align-items:center; justify-content:center; gap:9px; min-height:178px; text-align:center; cursor:none; border-style:dashed; border-color:var(--glass-border)}
-  @media (pointer:coarse){ .setcard.newcard{cursor:pointer} }
+  .setcard.newcard{display:flex; flex-direction:column; align-items:center; justify-content:center; gap:9px; min-height:178px; text-align:center; cursor:pointer; border-style:dashed; border-color:var(--glass-border)}
   .setcard.newcard:hover{border-color:transparent; box-shadow:0 18px 44px -20px rgba(255,46,151,.6)}
   .newplus{width:42px; height:42px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:24px; font-weight:300; color:#10040C; background:var(--spectrum); background-size:200% auto; box-shadow:0 0 26px -8px rgba(255,46,151,.7)}
   .newcard .nt{font-family:var(--display); font-weight:600; font-size:13.5px; color:var(--paper)}
   .newcard .ns{font-family:var(--body); font-size:10.5px; color:var(--mist); max-width:120px; line-height:1.35}
   .sc-thumb{position:relative; height:64px; background:rgba(0,0,0,.25); padding:8px 8px 0}
   .sc-thumb svg{width:100%; height:48px; display:block}
-  .sc-spun{position:absolute; right:9px; top:9px; display:inline-flex; align-items:center; gap:4px; font-family:var(--mono); font-size:8.5px; text-transform:uppercase; letter-spacing:.04em; color:var(--live); background:rgba(10,10,18,.72); border-radius:999px; padding:2px 7px; -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px)}
+  .sc-spun{position:absolute; right:9px; top:9px; display:inline-flex; align-items:center; gap:4px; font-family:var(--mono); font-size:8.5px; text-transform:uppercase; letter-spacing:.04em; color:var(--live); background:rgba(10,10,18,.8); border-radius:999px; padding:2px 7px}
   .sc-spun .d{width:5px;height:5px;border-radius:50%;background:var(--live); box-shadow:0 0 6px var(--live)}
   .sc-body{padding:11px 12px 13px}
   .sc-name{font-family:var(--display); font-weight:600; font-size:13px; color:var(--paper); letter-spacing:-0.01em}
@@ -518,8 +521,7 @@
   /* ===================== CUE SHEET ===================== */
   .cue-grid{display:grid; grid-template-columns:0.9fr 1.1fr; gap:clamp(28px,4vw,48px); align-items:center; margin-top:8px}
   .codeframe{
-    background:rgba(10,10,18,.72); border:1px solid var(--glass-border); border-radius:18px; overflow:hidden;
-    -webkit-backdrop-filter:blur(16px); backdrop-filter:blur(16px);
+    background:rgba(10,10,18,.82); border:1px solid var(--glass-border); border-radius:18px; overflow:hidden;
     box-shadow:0 30px 90px -42px rgba(0,0,0,.9), 0 0 60px -22px rgba(155,92,255,.45);
   }
   .code-bar{display:flex; align-items:center; gap:8px; padding:13px 16px; border-bottom:1px solid var(--glass-border-2); background:rgba(255,255,255,.025)}
@@ -572,9 +574,13 @@
   .foot-bot{display:flex; flex-wrap:wrap; gap:12px 24px; justify-content:space-between; align-items:center; font-size:13px; color:var(--mist)}
   .foot-bot .mono{font-family:var(--mono); font-size:12px}
 
-  /* ===================== REVEAL ===================== */
-  .reveal{opacity:0; transform:translateY(22px); transition:opacity .7s var(--ease), transform .7s var(--ease)}
-  .reveal.in{opacity:1; transform:none}
+  /* ===================== REVEAL =====================
+     Default = VISIBLE. JS opts sections INTO the hidden-then-reveal
+     animation by adding .reveal-armed. With no JS (or no IO support),
+     every .reveal stays fully visible. */
+  .reveal{opacity:1; transform:none; transition:opacity .7s var(--ease), transform .7s var(--ease)}
+  .reveal-armed{opacity:0; transform:translateY(22px)}
+  .reveal-armed.in{opacity:1; transform:none}
 
   /* eq helper */
   .eq i{animation:eq 1.05s var(--ease) infinite}
@@ -611,42 +617,37 @@
     .deck-rail{flex-wrap:wrap}
     .deck-readout{order:3; width:100%; margin-top:4px}
   }
+  /* on small screens, lighten the mesh further (fewer big blobs animating) */
+  @media (max-width:680px){
+    .blob.b5{display:none}
+  }
 
   @media (prefers-reduced-motion:reduce){
     *{animation:none !important; transition:none !important; scroll-behavior:auto !important}
-    #viz{display:none}
-    #vizFallback{display:block}
-    .reveal{opacity:1; transform:none}
+    .blob{animation:none !important}
+    .mesh-inner{transform:none !important}
+    .reveal,.reveal-armed{opacity:1 !important; transform:none !important}
     .gradtext,.vside.is-djing h3,.ccard.is-us .kind,.dash-head h3,.hook b,.ticker .sep{background-position:0 50% !important}
     .ticker .track{transform:none}
-    .jog{display:none !important}
-    body{cursor:auto !important}
-    button,.btn,.vchip,.spin,.bf-tab,.setcard.newcard{cursor:pointer !important}
     .mega-line .ch,.fc-mega .ch{font-variation-settings:"wght" 600 !important}
   }
 </style>
 </head>
 <body>
 
-<!-- THE LIVING VISUALIZER (canvas behind everything) -->
-<canvas id="viz" aria-hidden="true"></canvas>
-<div id="vizFallback" aria-hidden="true"></div>
+<!-- THE LIVING BACKGROUND: CSS-only animated gradient mesh (no canvas, no live-blur glass) -->
+<div class="mesh" aria-hidden="true">
+  <div class="mesh-inner" id="meshInner">
+    <div class="blob b1"></div>
+    <div class="blob b2"></div>
+    <div class="blob b3"></div>
+    <div class="blob b4"></div>
+    <div class="blob b5"></div>
+  </div>
+</div>
 <div class="veil" aria-hidden="true"></div>
 <div class="grain" aria-hidden="true"></div>
 <div class="flash" id="flash" aria-hidden="true"></div>
-
-<!-- custom jog-wheel cursor -->
-<div class="jog" id="jog" aria-hidden="true">
-  <svg viewBox="0 0 40 40">
-    <circle class="ring" cx="20" cy="20" r="17"/>
-    <g class="ticks">
-      <line x1="20" y1="3.5" x2="20" y2="7"/><line x1="20" y1="33" x2="20" y2="36.5"/>
-      <line x1="3.5" y1="20" x2="7" y2="20"/><line x1="33" y1="20" x2="36.5" y2="20"/>
-    </g>
-    <path class="play" d="M16 14l9 6-9 6z"/>
-    <circle class="core" cx="20" cy="20" r="2"/>
-  </svg>
-</div>
 
 <!-- top energy line + the scroll spine -->
 <div class="topline" aria-hidden="true"><div class="fillbar" id="topFill"></div></div>
@@ -722,19 +723,18 @@
         <linearGradient id="sliceGrad" x1="0" y1="0" x2="1" y2="0">
           <stop offset="0" stop-color="#FF2E97"/><stop offset=".2" stop-color="#FF6B3D"/><stop offset=".4" stop-color="#FFB627"/><stop offset=".62" stop-color="#2EE6C4"/><stop offset=".82" stop-color="#2EA8FF"/><stop offset="1" stop-color="#9B5CFF"/>
         </linearGradient>
-        <filter id="sliceSoft" x="-10%" y="-60%" width="120%" height="220%"><feGaussianBlur stdDeviation="7"/></filter>
       </defs>
-      <path id="sliceGlow" fill="none" stroke="url(#sliceGrad)" stroke-width="10" stroke-linecap="round" opacity=".45" filter="url(#sliceSoft)"></path>
+      <path id="sliceGlow" fill="none" stroke="url(#sliceGrad)" stroke-width="9" stroke-linecap="round" opacity=".26"></path>
       <path id="sliceLine" fill="none" stroke="url(#sliceGrad)" stroke-width="3.5" stroke-linecap="round"></path>
-      <circle id="sliceHeadG" r="14" fill="#3DFF88" opacity=".3" filter="url(#sliceSoft)"></circle>
+      <circle id="sliceHeadG" r="11" fill="#3DFF88" opacity=".22"></circle>
       <circle id="sliceHead" r="5.5" fill="#3DFF88"></circle>
     </svg>
   </div>
 
   <div class="mega" id="mega">
-    <span class="mega-line l-vibe" data-word="VIBE"></span>
-    <span class="mega-line l-your" data-word="YOUR"></span>
-    <span class="mega-line l-set" data-word="SET."></span>
+    <span class="mega-line l-vibe" data-word="VIBE">VIBE</span>
+    <span class="mega-line l-your" data-word="YOUR">YOUR</span>
+    <span class="mega-line l-set" data-word="SET.">SET.</span>
   </div>
 
   <p class="hook">Don't DJ it. <b>Play it.</b></p>
@@ -850,10 +850,10 @@
           <path d="M4 16C8 16 9 6 12 6s4 10 8 10" stroke="url(#mg)" stroke-width="2.2" stroke-linecap="round"/>
           <circle cx="12" cy="6" r="2.4" fill="#FFB627"/>
         </svg>
-        <div class="pc-text" id="promptText" data-ph="Describe tonight... sunset rooftop, build slow, no vocals till the peak" tabindex="0" role="textbox" aria-label="Vibe description"></div>
+        <div class="pc-text" id="promptText" data-ph="Describe tonight... sunset rooftop, build slow, no vocals till the peak" tabindex="0" role="textbox" aria-label="Vibe description">Sunset rooftop... build slow, no vocals till the peak</div>
       </div>
       <div class="pc-chips" role="list" aria-label="Example vibes">
-        <button class="vchip" type="button" data-vibe="rooftop">Sunset rooftop</button>
+        <button class="vchip active" type="button" data-vibe="rooftop">Sunset rooftop</button>
         <button class="vchip" type="button" data-vibe="warehouse">Warehouse 2am</button>
         <button class="vchip" type="button" data-vibe="beach">Beach sundowner</button>
         <button class="vchip" type="button" data-vibe="party">House party</button>
@@ -864,16 +864,16 @@
       <div class="pc-preview">
         <div class="pc-pv-top">
           <span class="pc-pv-name" id="pcName">Sunset rooftop</span>
-          <span class="pc-pv-stat" id="pcStat"><span class="pc-pv-dot" id="pcDot"></span><span id="pcStatTxt">drafting</span></span>
+          <span class="pc-pv-stat" id="pcStat"><span class="pc-pv-dot" id="pcDot"></span><span id="pcStatTxt">live</span></span>
         </div>
         <div class="pc-pv-body">
           <svg class="pc-curve" viewBox="0 0 600 110" preserveAspectRatio="none" aria-hidden="true">
-            <defs><clipPath id="pcClip"><rect id="pcClipRect" x="0" y="0" width="0" height="110"/></clipPath></defs>
+            <defs><clipPath id="pcClip"><rect id="pcClipRect" x="0" y="0" width="600" height="110"/></clipPath></defs>
             <path id="pcFill" fill="url(#pvArea)"></path>
             <path id="pcGhost" fill="none" stroke="rgba(255,255,255,.14)" stroke-width="2"></path>
             <path id="pcDraw" fill="none" stroke="url(#pvLine)" stroke-width="3" stroke-linecap="round" clip-path="url(#pcClip)"></path>
             <line id="pcLine" x1="0" x2="0" y1="0" y2="110" stroke="#3DFF88" stroke-width="1.4" opacity="0"></line>
-            <circle id="pcHead" r="4.5" fill="#3DFF88" opacity="0" style="filter:drop-shadow(0 0 7px rgba(61,255,136,.9))"></circle>
+            <circle id="pcHead" r="4.5" fill="#3DFF88" opacity="0"></circle>
           </svg>
           <div class="pc-meta">
             <span id="pcBpm">118-124 BPM</span><span id="pcBar">bar 0 / 240</span>
@@ -979,7 +979,7 @@
               <path id="wsGhost" fill="none" stroke="rgba(255,255,255,.16)" stroke-width="2"></path>
               <path id="wsDraw" fill="none" stroke="url(#pvLine)" stroke-width="3" stroke-linecap="round" clip-path="url(#wsClip)"></path>
               <line id="wsPlayLine" x1="350" x2="350" y1="0" y2="118" stroke="#3DFF88" stroke-width="1.4"></line>
-              <circle id="wsHead" r="4.5" fill="#3DFF88" style="filter:drop-shadow(0 0 7px rgba(61,255,136,.9))"></circle>
+              <circle id="wsHead" r="4.5" fill="#3DFF88"></circle>
             </svg>
           </div>
 
@@ -1266,17 +1266,29 @@
 <script>
 (function(){
   "use strict";
-  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  var coarse = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+  /* Everything below is wrapped so a single failure can NEVER blank the page
+     or freeze interaction. Content is visible by default in the HTML/CSS;
+     JS is pure enhancement. */
+  var reduce = false, coarse = false;
+  try { reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch(e){}
+  try { coarse = window.matchMedia && window.matchMedia('(pointer: coarse)').matches; } catch(e){}
   var root = document.documentElement;
-  if(!reduce) root.classList.add('smooth');
+  try { if(!reduce) root.classList.add('smooth'); } catch(e){}
 
-  /* rAF bookkeeping: every loop pushes its id here; we cancel all on tab-hide.
-     Core loops register a restart fn so we resume exactly one instance on show. */
-  var rafIds = [];
-  function raf(fn){ var id = requestAnimationFrame(fn); rafIds.push(id); return id; }
-  var restarters = [];
-  function onResume(fn){ restarters.push(fn); }
+  /* ----- ONE shared RAF loop. Every animated thing registers a callback;
+     we run them all from a single requestAnimationFrame tick. Paused on
+     tab-hide, resumed on show. No per-feature RAF loops. ----- */
+  var tasks = [];
+  function every(fn){ tasks.push(fn); }
+  var rafId = null, running = false, lastTs = 0;
+  function tick(now){
+    if(!running) return;
+    var t = now/1000;
+    for(var i=0;i<tasks.length;i++){ try{ tasks[i](t, now); }catch(e){} }
+    rafId = requestAnimationFrame(tick);
+  }
+  function startLoop(){ if(running || reduce) return; running = true; rafId = requestAnimationFrame(tick); }
+  function stopLoop(){ running = false; if(rafId){ cancelAnimationFrame(rafId); rafId = null; } }
 
   function lerp(a,b,t){ return a + (b-a)*t; }
   function clamp(v,a,b){ return v<a?a:(v>b?b:v); }
@@ -1289,278 +1301,101 @@
   }
   var COOL='#2EE6C4', COOLB='#2EA8FF', HOT='#FF2E97', HOTB='#9B5CFF';
 
-  /* ============================================================
-     0. SHARED STATE - one `energy`, one beat clock.
-        energy 0..1 drives: CSS vars, hero type, slice curve, canvas.
-        targetEnergy is set by the fader (user) or the scroll spine.
-     ============================================================ */
+  /* shared energy + a cheap beat clock (math only, no canvas) */
   var energy = 0.16, targetEnergy = 0.16;
-
-  // BEAT = the canvas heartbeat; its bpm + energy ride the shared `energy`.
-  var BEAT = { bpm: 118, phase: 0, pulse: 0, bar: 0, energy: 0.16, targetEnergy: 0.16, drop: 0, intensity: 1 };
   function beatPulseNow(now){
-    var period = 60000 / BEAT.bpm;
+    var bpm = lerp(112, 134, energy);
+    var period = 60000 / bpm;
     var p = (now % period) / period;
     return Math.pow(1 - p, 2.2);
   }
 
-  // canvas palette: cool (warm-up) -> hot (peak), lerped by energy each frame
-  var COOL_PAL = [[46,230,196],[46,168,255],[46,230,196],[46,168,255],[155,92,255],[46,168,255]];
-  var HOT_PAL  = [[255,46,151],[255,107,61],[255,182,39],[255,46,151],[155,92,255],[255,46,151]];
-  var curPal = COOL_PAL.map(function(c){return c.slice();});
-  function rgba(c, a){ return 'rgba('+(c[0]|0)+','+(c[1]|0)+','+(c[2]|0)+','+a+')'; }
-
   /* ---- inline-icon swap ---- */
-  var icons = {
-    CHECK:  '<svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M3.5 9.5l3.5 3.5 7.5-8" stroke="#B4B0CC" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-    CHECKG: '<svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M3.5 9.5l3.5 3.5 7.5-8" stroke="#3DFF88" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-    CROSS:  '<svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M5 5l8 8M13 5l-8 8" stroke="#6a6580" stroke-width="1.7" stroke-linecap="round"/></svg>'
-  };
-  document.querySelectorAll('.ic').forEach(function(el){
-    var k = (el.getAttribute('data-ic')||'').trim();
-    if(icons[k]) el.innerHTML = icons[k];
-  });
+  try {
+    var icons = {
+      CHECK:  '<svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M3.5 9.5l3.5 3.5 7.5-8" stroke="#B4B0CC" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+      CHECKG: '<svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M3.5 9.5l3.5 3.5 7.5-8" stroke="#3DFF88" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+      CROSS:  '<svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M5 5l8 8M13 5l-8 8" stroke="#6a6580" stroke-width="1.7" stroke-linecap="round"/></svg>'
+    };
+    document.querySelectorAll('.ic').forEach(function(el){
+      var k = (el.getAttribute('data-ic')||'').trim();
+      if(icons[k]) el.innerHTML = icons[k];
+    });
+  } catch(e){}
 
   /* ---- wordmark "x" as crossfade of two waveform strokes ---- */
-  document.querySelectorAll('.x-mark').forEach(function(el){
-    var gid = 'xg' + Math.random().toString(36).slice(2,8);
-    el.innerHTML =
-      '<svg width="0.62em" height="0.96em" viewBox="0 0 16 22" fill="none" style="margin:0 .01em;transform:translateY(.06em)" aria-hidden="true">'
-      + '<defs><linearGradient id="'+gid+'" x1="0" y1="0" x2="1" y2="1">'
-      + '<stop offset="0" stop-color="#FF2E97"/><stop offset=".5" stop-color="#FFB627"/><stop offset="1" stop-color="#9B5CFF"/></linearGradient></defs>'
-      + '<path d="M2 18 C5 18 5 11 8 11 C11 11 11 4 14 4" stroke="url(#'+gid+')" stroke-width="2.2" stroke-linecap="round" fill="none"/>'
-      + '<path d="M2 4 C5 4 5 11 8 11 C11 11 11 18 14 18" stroke="url(#'+gid+')" stroke-width="2.2" stroke-linecap="round" fill="none" opacity=".62"/>'
-      + '</svg>';
-  });
-  var srStyle = document.createElement('style');
-  srStyle.textContent = '.sr-x{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}.x-mark{display:inline-flex;align-items:center}';
-  document.head.appendChild(srStyle);
+  try {
+    document.querySelectorAll('.x-mark').forEach(function(el){
+      var gid = 'xg' + Math.random().toString(36).slice(2,8);
+      el.innerHTML =
+        '<svg width="0.62em" height="0.96em" viewBox="0 0 16 22" fill="none" style="margin:0 .01em;transform:translateY(.06em)" aria-hidden="true">'
+        + '<defs><linearGradient id="'+gid+'" x1="0" y1="0" x2="1" y2="1">'
+        + '<stop offset="0" stop-color="#FF2E97"/><stop offset=".5" stop-color="#FFB627"/><stop offset="1" stop-color="#9B5CFF"/></linearGradient></defs>'
+        + '<path d="M2 18 C5 18 5 11 8 11 C11 11 11 4 14 4" stroke="url(#'+gid+')" stroke-width="2.2" stroke-linecap="round" fill="none"/>'
+        + '<path d="M2 4 C5 4 5 11 8 11 C11 11 11 18 14 18" stroke="url(#'+gid+')" stroke-width="2.2" stroke-linecap="round" fill="none" opacity=".62"/>'
+        + '</svg>';
+    });
+    var srStyle = document.createElement('style');
+    srStyle.textContent = '.sr-x{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}.x-mark{display:inline-flex;align-items:center}';
+    document.head.appendChild(srStyle);
+  } catch(e){}
 
   /* ---- nav scrolled state ---- */
-  var nav = document.getElementById('nav');
-  function onNavScroll(){ if(window.scrollY > 12) nav.classList.add('scrolled'); else nav.classList.remove('scrolled'); }
-  onNavScroll(); window.addEventListener('scroll', onNavScroll, {passive:true});
+  try {
+    var nav = document.getElementById('nav');
+    function onNavScroll(){ if(window.scrollY > 12) nav.classList.add('scrolled'); else nav.classList.remove('scrolled'); }
+    onNavScroll(); window.addEventListener('scroll', onNavScroll, {passive:true});
+  } catch(e){}
 
-  /* ---- scroll reveal ---- */
-  if('IntersectionObserver' in window && !reduce){
-    var io = new IntersectionObserver(function(entries){
-      entries.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } });
-    }, {threshold:0.12, rootMargin:'0px 0px -8% 0px'});
-    document.querySelectorAll('.reveal:not(.in)').forEach(function(el, i){
-      el.style.transitionDelay = Math.min(i % 4 * 70, 210) + 'ms';
-      io.observe(el);
-    });
-  } else {
-    document.querySelectorAll('.reveal').forEach(function(el){ el.classList.add('in'); });
-  }
-
-  /* ============================================================
-     1. THE LIVING VISUALIZER (B) - raw canvas2d, no libs.
-        blobs of club light + reactive spectrum floor + sparks,
-        all pulsing on BEAT, blooming on the drop, warming with energy.
-     ============================================================ */
-  var canvas = document.getElementById('viz');
-  var ctx = canvas && canvas.getContext ? canvas.getContext('2d', {alpha:true, desynchronized:true}) : null;
-  var vizRAF = null, vizLast = 0, vizRunning = false;
-  var DPR = 1, VW = 0, VH = 0;
-  var isMobile = Math.min(window.innerWidth, window.innerHeight) < 640;
-  var blobs = [], particles = [], bars = [];
-  function rand(a,b){ return a + Math.random()*(b-a); }
-
-  function initField(){
-    DPR = Math.min(window.devicePixelRatio || 1, isMobile ? 1.4 : 2);
-    VW = window.innerWidth; VH = window.innerHeight;
-    canvas.width = Math.round(VW * DPR);
-    canvas.height = Math.round(VH * DPR);
-    canvas.style.width = VW + 'px';
-    canvas.style.height = VH + 'px';
-
-    var blobN = isMobile ? 5 : 7;
-    blobs = [];
-    for(var i=0;i<blobN;i++){
-      blobs.push({
-        x: rand(0,VW), y: rand(0,VH),
-        baseR: rand(VW*0.18, VW*0.42), ci: i % 6,
-        ang: rand(0, Math.PI*2), spd: rand(0.04, 0.12),
-        orbit: rand(VW*0.06, VW*0.16), ox: rand(0,VW), oy: rand(0,VH),
-        wob: rand(0.4, 1.1)
+  /* ---- scroll reveal: opt-in. Sections are visible by default; we ARM
+     them (hide) then reveal on intersect. If anything throws, content
+     simply stays visible. ---- */
+  try {
+    if('IntersectionObserver' in window && !reduce){
+      var io = new IntersectionObserver(function(entries){
+        entries.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } });
+      }, {threshold:0.10, rootMargin:'0px 0px -6% 0px'});
+      document.querySelectorAll('.reveal').forEach(function(el, i){
+        el.classList.add('reveal-armed');
+        el.style.transitionDelay = Math.min(i % 4 * 70, 210) + 'ms';
+        io.observe(el);
       });
+      // safety net: if any armed element is still hidden after 2.4s, force it visible
+      setTimeout(function(){
+        document.querySelectorAll('.reveal-armed:not(.in)').forEach(function(el){
+          var r = el.getBoundingClientRect();
+          if(r.top < window.innerHeight && r.bottom > 0) el.classList.add('in');
+        });
+      }, 2400);
     }
-    var partN = isMobile ? 24 : 62;
-    particles = [];
-    for(var p=0;p<partN;p++){ particles.push(spawnParticle(true)); }
-    var barN = isMobile ? 40 : 84;
-    bars = [];
-    for(var b=0;b<barN;b++){ bars.push(0); }
-  }
-  function spawnParticle(initial){
-    return {
-      x: rand(0,VW), y: initial ? rand(0,VH) : VH + rand(0,40),
-      r: rand(0.6, 2.4), vy: rand(8, 26), vx: rand(-6, 6),
-      ci: (Math.random()*6)|0, a: rand(0.25, 0.8), tw: rand(0, Math.PI*2)
-    };
-  }
-
-  function stepField(dt, t){
-    if(!ctx) return;
-    // ---- beat clock + ride the shared energy ----
-    BEAT.targetEnergy = energy;                       // the fader/scroll drive the field
-    BEAT.bpm = lerp(112, 134, energy);                // tempo warms with energy
-    var bps = BEAT.bpm/60;
-    BEAT.phase += dt * bps;
-    while(BEAT.phase >= 1){ BEAT.phase -= 1; BEAT.bar += 0.25; BEAT.pulse = 1; }
-    BEAT.pulse *= Math.pow(0.0009, dt);
-    BEAT.drop  *= Math.pow(0.18, dt);
-    BEAT.energy = lerp(BEAT.energy, BEAT.targetEnergy, 1 - Math.pow(0.12, dt));
-    // warm the palette cool -> hot by energy
-    for(var i=0;i<6;i++){
-      for(var c=0;c<3;c++){ curPal[i][c] = lerp(COOL_PAL[i][c], HOT_PAL[i][c], BEAT.energy); }
-    }
-
-    var en = BEAT.energy, kick = BEAT.pulse, drop = BEAT.drop;
-    var glob = BEAT.intensity * (1 + drop*0.9);
-    var bloom = (0.6 + en*0.7) * glob;
-
-    ctx.setTransform(DPR,0,0,DPR,0,0);
-    ctx.globalCompositeOperation = 'source-over';
-    ctx.fillStyle = isMobile ? 'rgba(10,10,18,0.32)' : 'rgba(10,10,18,0.22)';
-    ctx.fillRect(0,0,VW,VH);
-
-    // ---- flowing gradient field ----
-    ctx.globalCompositeOperation = 'lighter';
-    for(var bI=0;bI<blobs.length;bI++){
-      var bl = blobs[bI];
-      bl.ang += bl.spd * dt;
-      var cx2 = bl.ox + Math.cos(bl.ang) * bl.orbit + Math.sin(t*0.13*bl.wob + bI)*VW*0.04;
-      var cy2 = bl.oy + Math.sin(bl.ang*0.8) * bl.orbit*0.8 + Math.cos(t*0.11*bl.wob + bI)*VH*0.04;
-      var r = bl.baseR * (0.82 + en*0.5 + kick*0.18*glob + drop*0.5);
-      var col = curPal[bl.ci];
-      var alpha = (isMobile ? 0.16 : 0.20) * bloom;
-      var g = ctx.createRadialGradient(cx2, cy2, 0, cx2, cy2, r);
-      g.addColorStop(0, rgba(col, Math.min(0.9, alpha*2.4)));
-      g.addColorStop(0.45, rgba(col, alpha));
-      g.addColorStop(1, rgba(col, 0));
-      ctx.fillStyle = g;
-      ctx.beginPath(); ctx.arc(cx2, cy2, r, 0, Math.PI*2); ctx.fill();
-    }
-
-    // ---- reactive spectrum bar field along the floor ----
-    var n = bars.length, floorY = VH, bw = VW / n;
-    var maxH = VH * (isMobile ? 0.30 : 0.40);
-    for(var k=0;k<n;k++){
-      var px = k/(n-1);
-      var shape = Math.sin(px*Math.PI) * 0.6 + 0.4;
-      var wobble = 0.5 + 0.5*Math.sin(t*2.2 + k*0.5) * Math.sin(t*0.7 + k*0.13);
-      var target = (0.18 + en*0.6) * shape * (0.5 + wobble*0.7) + kick*0.35*glob + drop*0.5;
-      target = clamp(target, 0, 1.25);
-      bars[k] = lerp(bars[k], target, 1 - Math.pow(0.0004, dt));
-      var h = bars[k] * maxH;
-      var ci = (k * 6 / n) | 0; if(ci>5) ci=5;
-      var col2 = curPal[ci % 6];
-      var ga = (0.10 + 0.22*bars[k]) * (0.7+bloom*0.5);
-      var lg = ctx.createLinearGradient(0, floorY - h, 0, floorY);
-      lg.addColorStop(0, rgba(col2, ga));
-      lg.addColorStop(1, rgba(col2, 0));
-      ctx.fillStyle = lg;
-      var x = k*bw;
-      ctx.fillRect(x, floorY - h, bw*0.82, h);
-      if(bars[k] > 0.25){
-        ctx.fillStyle = rgba(col2, Math.min(0.5, bars[k]*0.5)*(0.6+bloom*0.4));
-        ctx.beginPath(); ctx.arc(x + bw*0.41, floorY - h, Math.max(0.8, bw*0.10), 0, Math.PI*2); ctx.fill();
-      }
-    }
-
-    // ---- drifting sparks ----
-    for(var pI=0;pI<particles.length;pI++){
-      var pt = particles[pI];
-      pt.y -= (pt.vy * (1 + en*0.6) + kick*40*glob + drop*120) * dt;
-      pt.x += (pt.vx + Math.sin(t*0.5 + pt.tw)*8) * dt;
-      pt.tw += dt*3;
-      if(pt.y < -10 || pt.x < -20 || pt.x > VW+20){ particles[pI] = spawnParticle(false); continue; }
-      var col3 = curPal[pt.ci % 6];
-      var twk = 0.6 + 0.4*Math.sin(pt.tw);
-      var pa = pt.a * twk * (0.6 + bloom*0.5);
-      var pr = pt.r * (1 + kick*0.5*glob + drop*0.8);
-      ctx.fillStyle = rgba(col3, pa*0.35);
-      ctx.beginPath(); ctx.arc(pt.x, pt.y, pr*3.2, 0, Math.PI*2); ctx.fill();
-      ctx.fillStyle = rgba(col3, Math.min(0.95, pa));
-      ctx.beginPath(); ctx.arc(pt.x, pt.y, pr, 0, Math.PI*2); ctx.fill();
-    }
-
-    // ---- center bloom on the drop ----
-    if(drop > 0.02){
-      ctx.globalCompositeOperation = 'lighter';
-      var bg = ctx.createRadialGradient(VW/2, VH*0.42, 0, VW/2, VH*0.42, VW*0.7);
-      bg.addColorStop(0, rgba(curPal[0], 0.22*drop));
-      bg.addColorStop(0.5, rgba(curPal[4], 0.12*drop));
-      bg.addColorStop(1, 'rgba(0,0,0,0)');
-      ctx.fillStyle = bg;
-      ctx.fillRect(0,0,VW,VH);
-    }
-    ctx.globalCompositeOperation = 'source-over';
-  }
-
-  function vizLoop(now){
-    if(!vizRunning) return;
-    var dt = vizLast ? Math.min(0.05, (now - vizLast)/1000) : 0.016;
-    vizLast = now;
-    stepField(dt, now/1000);
-    vizRAF = requestAnimationFrame(vizLoop);
-    rafIds.push(vizRAF);
-  }
-  function startViz(){ if(reduce || !ctx || vizRunning) return; vizRunning = true; vizLast = 0; vizRAF = requestAnimationFrame(vizLoop); rafIds.push(vizRAF); }
-  function stopViz(){ vizRunning = false; if(vizRAF){ cancelAnimationFrame(vizRAF); vizRAF = null; } }
-  if(ctx && !reduce){
-    initField(); startViz();
-    onResume(startViz);
-    var rt;
-    window.addEventListener('resize', function(){
-      clearTimeout(rt);
-      rt = setTimeout(function(){ isMobile = Math.min(window.innerWidth, window.innerHeight) < 640; initField(); }, 180);
-    }, {passive:true});
-  }
+  } catch(e){}
 
   /* ============================================================
-     2. CUSTOM JOG-WHEEL CURSOR (C)
+     MESH HEAT - warm + scale the CSS gradient blobs with energy.
+     Pure CSS-var writes a few times a second (NOT per frame).
      ============================================================ */
-  var jog = document.getElementById('jog');
-  var jx = window.innerWidth/2, jy = window.innerHeight/2, jcx = jx, jcy = jy;
-  var jogActive = false, jogRunning = false;
-  if(jog && !reduce && !coarse){
-    document.addEventListener('mousemove', function(e){ jx = e.clientX; jy = e.clientY; if(!jogActive){ jogActive=true; jog.style.opacity='1'; } }, {passive:true});
-    document.addEventListener('mouseleave', function(){ jog.style.opacity='0'; });
-    document.addEventListener('mousedown', function(){ document.body.classList.add('grabbing'); jog.classList.add('spin'); });
-    document.addEventListener('mouseup', function(){ document.body.classList.remove('grabbing'); jog.classList.remove('spin'); });
-    jog.style.opacity = '0';
-    function jogTick(){
-      if(!jogRunning) return;
-      jcx = lerp(jcx, jx, 0.32); jcy = lerp(jcy, jy, 0.32);
-      jog.style.transform = 'translate('+jcx.toFixed(1)+'px,'+jcy.toFixed(1)+'px)';
-      raf(jogTick);
-    }
-    function startJog(){ if(jogRunning) return; jogRunning = true; raf(jogTick); }
-    onResume(startJog);
-    startJog();
-  } else if(jog){ jog.style.display = 'none'; }
+  var meshInner = document.getElementById('meshInner');
 
   /* ============================================================
-     3. KINETIC HERO TYPE (A) - split into chars; weight floor +
-        wave ride the shared `energy`; beat punch on top.
+     KINETIC HERO TYPE (A) - split into chars; weight wave rides
+     `energy`; beat punch on top. Cheap: only font-variation-settings.
      ============================================================ */
   var megaLines = Array.prototype.slice.call(document.querySelectorAll('.mega-line'));
   var allCh = [];
-  megaLines.forEach(function(line){
-    var word = line.getAttribute('data-word') || '';
-    line.textContent = '';
-    for(var i=0;i<word.length;i++){
-      var sp = document.createElement('span');
-      sp.className = 'ch';
-      sp.textContent = word[i];
-      sp.style.fontVariationSettings = '"wght" 500';
-      line.appendChild(sp);
-      allCh.push(sp);
-    }
-  });
+  try {
+    megaLines.forEach(function(line){
+      var word = line.getAttribute('data-word') || '';
+      line.textContent = '';
+      for(var i=0;i<word.length;i++){
+        var sp = document.createElement('span');
+        sp.className = 'ch';
+        sp.textContent = word[i];
+        sp.style.fontVariationSettings = '"wght" 500';
+        line.appendChild(sp);
+        allCh.push(sp);
+      }
+    });
+  } catch(e){}
 
   /* the SLICE curve through the giant letters - amplitude scales with energy */
   var sliceLine = document.getElementById('sliceLine');
@@ -1570,7 +1405,7 @@
   var SW = 1280, sBase = 200, sTopMax = 60;
   function sliceEnergy(x, t, en){
     var p = x / SW;
-    var amp = 0.45 + en*0.5;                          // arc grows with energy
+    var amp = 0.45 + en*0.5;
     var arc = (p < 0.6) ? (0.30 + (p/0.6)*amp) : ((0.30+amp) - ((p-0.6)/0.4)*amp*0.4);
     var breathe = 0.05 * Math.sin(t*0.6 + p*1.6);
     var ripple = 0.035 * Math.sin(p*30 + t*1.4) * (0.4 + p*0.8);
@@ -1579,61 +1414,72 @@
   function buildSlice(t, en){
     if(!sliceLine) return;
     var span = sBase - sTopMax, d='';
-    for(var i=0;i<=160;i++){
-      var x=(i/160)*SW;
+    for(var i=0;i<=120;i++){
+      var x=(i/120)*SW;
       var y=sBase - sliceEnergy(x,t,en)*span;
       d += (i===0?'M':'L')+x.toFixed(1)+' '+y.toFixed(1)+' ';
     }
     sliceLine.setAttribute('d', d);
-    sliceGlow.setAttribute('d', d);
+    if(sliceGlow) sliceGlow.setAttribute('d', d);
     var ph = 0.5 + 0.18*Math.sin(t*0.32);
     var phx = ph*SW, phy = sBase - sliceEnergy(phx,t,en)*span;
-    sliceHead.setAttribute('cx', phx.toFixed(1)); sliceHead.setAttribute('cy', phy.toFixed(1));
-    sliceHeadG.setAttribute('cx', phx.toFixed(1)); sliceHeadG.setAttribute('cy', phy.toFixed(1));
+    if(sliceHead){ sliceHead.setAttribute('cx', phx.toFixed(1)); sliceHead.setAttribute('cy', phy.toFixed(1)); }
+    if(sliceHeadG){ sliceHeadG.setAttribute('cx', phx.toFixed(1)); sliceHeadG.setAttribute('cy', phy.toFixed(1)); }
   }
 
   // final-CTA kinetic chars + eq bars
   var finalEq = document.getElementById('finalEq');
   var finalBars = [];
-  if(finalEq){
-    for(var fb=0;fb<28;fb++){
-      var bar = document.createElement('i');
-      bar.style.height = (24 + Math.abs(Math.sin(fb*0.7))*60)+'%';
-      finalEq.appendChild(bar); finalBars.push(bar);
+  try {
+    if(finalEq){
+      for(var fb=0;fb<28;fb++){
+        var bar = document.createElement('i');
+        bar.style.height = (24 + Math.abs(Math.sin(fb*0.7))*60)+'%';
+        finalEq.appendChild(bar); finalBars.push(bar);
+      }
     }
-  }
+  } catch(e){}
   var fcCh = Array.prototype.slice.call(document.querySelectorAll('.fc-mega .ch'));
   var navBpm = document.getElementById('navBpm');
 
   /* ============================================================
-     4. THE MORPH ENGINE - one value repaints the page (C),
-        and feeds the hero type wave + slice curve + canvas energy.
+     THE MORPH ENGINE - one value repaints the page (C).
      ============================================================ */
   var bpmRead = document.getElementById('bpmRead');
   var deckWaveEl = document.getElementById('deckWave');
   var topFill = document.getElementById('topFill');
 
   var deckBars = [];
-  if(deckWaveEl){
-    for(var dwi=0;dwi<48;dwi++){
-      var db = document.createElement('i');
-      db.dataset.base = (0.18 + Math.abs(Math.sin(dwi*0.7))*0.5 + Math.random()*0.15).toFixed(3);
-      deckWaveEl.appendChild(db); deckBars.push(db);
+  try {
+    if(deckWaveEl){
+      for(var dwi=0;dwi<40;dwi++){
+        var db = document.createElement('i');
+        db.dataset.base = (0.18 + Math.abs(Math.sin(dwi*0.7))*0.5 + Math.random()*0.15).toFixed(3);
+        deckWaveEl.appendChild(db); deckBars.push(db);
+      }
     }
-  }
+  } catch(e){}
 
+  var lastHotWrite = -1;
   function applyEnergy(e){
-    var acc = mix(COOL, HOT, e);
-    var acc2 = mix(COOLB, HOTB, e);
-    root.style.setProperty('--energy', e.toFixed(4));
-    root.style.setProperty('--accent', acc);
-    root.style.setProperty('--accent-2', acc2);
-    root.style.setProperty('--glow', 'rgba('+parseInt(acc.slice(1,3),16)+','+parseInt(acc.slice(3,5),16)+','+parseInt(acc.slice(5,7),16)+','+(0.22+e*0.28).toFixed(2)+')');
-    root.style.setProperty('--type-boost', (0.94 + e*0.20).toFixed(3));
-    root.style.setProperty('--beat-ms', Math.round(lerp(760, 300, e))+'ms');
-    if(bpmRead) bpmRead.textContent = Math.round(lerp(112,134,e));
-    if(topFill) topFill.style.width = (e*100).toFixed(1)+'%';
-    document.body.classList.toggle('hot-cursor', e > 0.7);
+    try {
+      var acc = mix(COOL, HOT, e);
+      var acc2 = mix(COOLB, HOTB, e);
+      root.style.setProperty('--energy', e.toFixed(4));
+      root.style.setProperty('--accent', acc);
+      root.style.setProperty('--accent-2', acc2);
+      root.style.setProperty('--glow', 'rgba('+parseInt(acc.slice(1,3),16)+','+parseInt(acc.slice(3,5),16)+','+parseInt(acc.slice(5,7),16)+','+(0.22+e*0.28).toFixed(2)+')');
+      root.style.setProperty('--type-boost', (0.94 + e*0.20).toFixed(3));
+      root.style.setProperty('--beat-ms', Math.round(lerp(760, 300, e))+'ms');
+      if(bpmRead) bpmRead.textContent = Math.round(lerp(112,134,e));
+      if(topFill) topFill.style.width = (e*100).toFixed(1)+'%';
+      // mesh heat: only write when it moved enough (throttle CSS-var churn)
+      if(Math.abs(e - lastHotWrite) > 0.012){
+        lastHotWrite = e;
+        root.style.setProperty('--mesh-hot', e.toFixed(3));
+        root.style.setProperty('--mesh-scale', (1 + e*0.10).toFixed(3));
+      }
+    } catch(err){}
   }
   applyEnergy(energy);
 
@@ -1644,9 +1490,10 @@
   var dragging = false, dropArmed = false;
 
   function setHandle(e){
+    if(!fader || !faderHandle) return;
     var w = fader.clientWidth, x = e * w;
     faderHandle.style.transform = 'translateX('+x.toFixed(1)+'px)';
-    faderFill.style.width = x.toFixed(1)+'px';
+    if(faderFill) faderFill.style.width = x.toFixed(1)+'px';
     fader.setAttribute('aria-valuenow', Math.round(e*100));
     fader.setAttribute('aria-valuetext', e<0.24?'Warm-up':(e<0.52?'Build':(e<0.8?'Peak':'The drop')));
   }
@@ -1657,50 +1504,50 @@
   function setTarget(e, fromUser){
     targetEnergy = e;
     setHandle(e);
+    if(reduce){ energy = e; applyEnergy(e); buildSlice(0, e); }
     if(fromUser){
       fader.classList.add('touched');
       if(e > 0.8 && !dropArmed){ dropArmed = true; fireDrop(); }
       if(e < 0.7 && dropArmed){ dropArmed = false; }
     }
   }
-  if(fader){
-    setHandle(energy);
-    fader.addEventListener('pointerdown', function(ev){
-      dragging = true;
-      try{ fader.setPointerCapture(ev.pointerId); }catch(e){}
-      document.body.classList.add('grabbing');
-      setTarget(fromClientX(ev.clientX), true);
-    });
-    fader.addEventListener('pointermove', function(ev){ if(!dragging) return; setTarget(fromClientX(ev.clientX), true); });
-    function endDrag(ev){
-      if(!dragging) return;
-      dragging = false;
-      document.body.classList.remove('grabbing');
-      try{ fader.releasePointerCapture(ev.pointerId); }catch(e){}
+  try {
+    if(fader){
+      setHandle(energy);
+      fader.addEventListener('pointerdown', function(ev){
+        dragging = true;
+        try{ fader.setPointerCapture(ev.pointerId); }catch(e){}
+        document.body.classList.add('grabbing');
+        setTarget(fromClientX(ev.clientX), true);
+      });
+      fader.addEventListener('pointermove', function(ev){ if(!dragging) return; setTarget(fromClientX(ev.clientX), true); });
+      function endDrag(ev){
+        if(!dragging) return;
+        dragging = false;
+        document.body.classList.remove('grabbing');
+        try{ fader.releasePointerCapture(ev.pointerId); }catch(e){}
+      }
+      fader.addEventListener('pointerup', endDrag);
+      fader.addEventListener('pointercancel', endDrag);
+      fader.addEventListener('keydown', function(ev){
+        var step = 0.06, e = targetEnergy;
+        if(ev.key==='ArrowRight'||ev.key==='ArrowUp'){ e = clamp(e+step,0,1); }
+        else if(ev.key==='ArrowLeft'||ev.key==='ArrowDown'){ e = clamp(e-step,0,1); }
+        else if(ev.key==='Home'){ e = 0; }
+        else if(ev.key==='End'){ e = 1; }
+        else return;
+        ev.preventDefault();
+        setTarget(e, true);
+      });
     }
-    fader.addEventListener('pointerup', endDrag);
-    fader.addEventListener('pointercancel', endDrag);
-    fader.addEventListener('keydown', function(ev){
-      var step = 0.06, e = targetEnergy;
-      if(ev.key==='ArrowRight'||ev.key==='ArrowUp'){ e = clamp(e+step,0,1); }
-      else if(ev.key==='ArrowLeft'||ev.key==='ArrowDown'){ e = clamp(e-step,0,1); }
-      else if(ev.key==='Home'){ e = 0; }
-      else if(ev.key==='End'){ e = 1; }
-      else return;
-      ev.preventDefault();
-      setTarget(e, true);
-    });
-  }
+  } catch(e){}
 
-  /* ----- the unified hero loop: tween energy, paint everything ----- */
-  var heroRunning = false;
-  function heroTick(now){
-    if(!heroRunning) return;
+  /* ----- the unified hero task: tween energy, paint type/slice/waves ----- */
+  every(function(t, now){
     var d = targetEnergy - energy;
     if(Math.abs(d) > 0.0005){ energy += d * 0.16; } else { energy = targetEnergy; }
     applyEnergy(energy);
 
-    var t = now/1000;
     var pulse = beatPulseNow(now);
 
     // hero type: weight floor + wave rise with energy; beat punch on top
@@ -1734,46 +1581,48 @@
       var fa = 0.26 + Math.abs(Math.sin(t*3 + e2*0.6))*0.5*(0.6+energy*0.7) + pulse*0.22;
       finalBars[e2].style.transform = 'scaleY('+clamp(fa,0.1,1).toFixed(3)+')';
     }
-    raf(heroTick);
-  }
-  function startHero(){ if(heroRunning) return; heroRunning = true; raf(heroTick); }
-  onResume(startHero);
-  if(!reduce){ startHero(); }
-  else {
-    energy = 0.16; applyEnergy(0.16);
-    buildSlice(0, 0.16);
-    allCh.forEach(function(ch){ ch.style.fontVariationSettings='"wght" 600'; });
-    fcCh.forEach(function(ch){ ch.style.fontVariationSettings='"wght" 600'; });
-    finalBars.forEach(function(b){ b.style.transform='scaleY(.7)'; });
-    if(deckBars.length){ deckBars.forEach(function(b){ b.style.transform='scaleY('+b.dataset.base+')'; b.style.opacity='.4'; }); }
+  });
+
+  // reduced-motion: paint one static frame
+  if(reduce){
+    try {
+      energy = 0.16; applyEnergy(0.16);
+      buildSlice(0, 0.16);
+      allCh.forEach(function(ch){ ch.style.fontVariationSettings='"wght" 600'; });
+      fcCh.forEach(function(ch){ ch.style.fontVariationSettings='"wght" 600'; });
+      finalBars.forEach(function(b){ b.style.transform='scaleY(.7)'; });
+      if(deckBars.length){ deckBars.forEach(function(b){ b.style.transform='scaleY('+b.dataset.base+')'; b.style.opacity='.4'; }); }
+    } catch(e){}
   }
 
   /* nav clock ticks the BPM subtly off the live energy */
-  if(navBpm && !reduce){
-    setInterval(function(){
-      var base = Math.round(lerp(112,134,energy));
-      navBpm.textContent = base + Math.round(Math.sin(Date.now()/2200));
-    }, 1400);
-  } else if(navBpm){ navBpm.textContent = '118'; }
+  try {
+    if(navBpm && !reduce){
+      setInterval(function(){
+        var base = Math.round(lerp(112,134,energy));
+        navBpm.textContent = base + Math.round(Math.sin(Date.now()/2200));
+      }, 1400);
+    } else if(navBpm){ navBpm.textContent = '118'; }
+  } catch(e){}
 
-  /* ----- the DROP: page flash + canvas bloom + hero deck shake ----- */
+  /* ----- the DROP: page flash + hero deck shake (opacity + transform only) ----- */
   var flash = document.getElementById('flash');
   function fireDrop(){
     if(reduce) return;
-    if(flash){ flash.classList.remove('fire'); void flash.offsetWidth; flash.classList.add('fire'); }
-    BEAT.drop = 1; BEAT.pulse = 1;
-    var deck = document.getElementById('deck');
-    if(deck && deck.animate){
-      deck.animate(
-        [{transform:'translateX(0)'},{transform:'translateX(-5px)'},{transform:'translateX(5px)'},{transform:'translateX(-3px)'},{transform:'translateX(0)'}],
-        {duration:420, easing:'cubic-bezier(.36,.07,.19,.97)'}
-      );
-    }
+    try {
+      if(flash){ flash.classList.remove('fire'); void flash.offsetWidth; flash.classList.add('fire'); }
+      var deck = document.getElementById('deck');
+      if(deck && deck.animate){
+        deck.animate(
+          [{transform:'translateX(0)'},{transform:'translateX(-5px)'},{transform:'translateX(5px)'},{transform:'translateX(-3px)'},{transform:'translateX(0)'}],
+          {duration:420, easing:'cubic-bezier(.36,.07,.19,.97)'}
+        );
+      }
+    } catch(e){}
   }
 
   /* ============================================================
-     5. THE SCROLL SPINE (C) - scroll scrubs the set energy,
-        peak crossing fires the drop once.
+     THE SCROLL SPINE (C) - scroll scrubs the set energy.
      ============================================================ */
   var spineTrack = document.getElementById('spineTrack');
   var spineLit = document.getElementById('spineLit');
@@ -1785,43 +1634,50 @@
     if(p < 0.62){ arc = 0.16 + (p/0.62)*0.76; } else { arc = 0.92 - ((p-0.62)/0.38)*0.42; }
     return clamp(arc, 0.04, 1);
   }
-  (function buildSpine(){
-    if(!spineTrack) return;
-    var d='';
-    for(var i=0;i<=200;i++){
-      var p=i/200, y=p*SPH, e=setEnergyAt(p);
-      var x = SCX + (e-0.5)*44;
-      d += (i===0?'M':'L')+x.toFixed(1)+' '+y.toFixed(1)+' ';
-    }
-    spineTrack.setAttribute('d', d);
-    if(spineLit) spineLit.setAttribute('d', d);
-  })();
+  try {
+    (function buildSpine(){
+      if(!spineTrack) return;
+      var d='';
+      for(var i=0;i<=160;i++){
+        var p=i/160, y=p*SPH, e=setEnergyAt(p);
+        var x = SCX + (e-0.5)*44;
+        d += (i===0?'M':'L')+x.toFixed(1)+' '+y.toFixed(1)+' ';
+      }
+      spineTrack.setAttribute('d', d);
+      if(spineLit) spineLit.setAttribute('d', d);
+    })();
+  } catch(e){}
 
-  var spineFired = false;
+  var spineFired = false, scrollScheduled = false;
   function scrubSet(){
-    var doc = document.documentElement;
-    var max = (doc.scrollHeight - window.innerHeight) || 1;
-    var p = clamp(window.scrollY / max, 0, 1);
-    var e = setEnergyAt(p);
-    var y = p*SPH, ex = SCX + (e-0.5)*44;
-    if(spinePh){ spinePh.setAttribute('cx', ex.toFixed(1)); spinePh.setAttribute('cy', y.toFixed(1)); }
-    if(spinePhG){ spinePhG.setAttribute('cx', ex.toFixed(1)); spinePhG.setAttribute('cy', y.toFixed(1)); }
-    if(spineLit){
-      var len = spineLit.getTotalLength ? spineLit.getTotalLength() : 1400;
-      spineLit.style.strokeDasharray = len;
-      spineLit.style.strokeDashoffset = (len*(1-p)).toFixed(1);
-    }
-    // scroll DRIVES the shared energy unless the user is dragging the fader
-    if(!dragging){ targetEnergy = e; setHandle(e); }
-    if(p > 0.58 && p < 0.7 && !spineFired){ spineFired = true; fireDrop(); }
-    if(p < 0.5){ spineFired = false; }
+    scrollScheduled = false;
+    try {
+      var doc = document.documentElement;
+      var max = (doc.scrollHeight - window.innerHeight) || 1;
+      var p = clamp(window.scrollY / max, 0, 1);
+      var e = setEnergyAt(p);
+      var y = p*SPH, ex = SCX + (e-0.5)*44;
+      if(spinePh){ spinePh.setAttribute('cx', ex.toFixed(1)); spinePh.setAttribute('cy', y.toFixed(1)); }
+      if(spinePhG){ spinePhG.setAttribute('cx', ex.toFixed(1)); spinePhG.setAttribute('cy', y.toFixed(1)); }
+      if(spineLit){
+        var len = spineLit.getTotalLength ? spineLit.getTotalLength() : 1400;
+        spineLit.style.strokeDasharray = len;
+        spineLit.style.strokeDashoffset = (len*(1-p)).toFixed(1);
+      }
+      if(!dragging){ targetEnergy = e; setHandle(e); if(reduce){ energy=e; applyEnergy(e); } }
+      if(p > 0.58 && p < 0.7 && !spineFired){ spineFired = true; fireDrop(); }
+      if(p < 0.5){ spineFired = false; }
+    } catch(err){}
   }
-  window.addEventListener('scroll', function(){ if(!reduce) requestAnimationFrame(scrubSet); }, {passive:true});
-  window.addEventListener('resize', function(){ if(fader){ setHandle(targetEnergy); } });
-  scrubSet();
+  try {
+    window.addEventListener('scroll', function(){ if(!scrollScheduled){ scrollScheduled = true; requestAnimationFrame(scrubSet); } }, {passive:true});
+    window.addEventListener('resize', function(){ if(fader){ setHandle(targetEnergy); } });
+    scrubSet();
+  } catch(e){}
 
   /* ============================================================
-     6. PROMPT-TO-SET (C) - draw a set from a vibe
+     PROMPT-TO-SET (C) - draw a set from a vibe.
+     Renders fully on load (visible default) and animates as enhancement.
      ============================================================ */
   var VIBES = {
     rooftop:    { name:'Sunset rooftop', ph:'Sunset rooftop... build slow, no vocals till the peak', len:240, bpm:'118-124 BPM', curve:[0.3,0.36,0.42,0.5,0.6,0.7,0.82,0.9,0.86,0.74,0.64,0.58] },
@@ -1863,124 +1719,146 @@
     df += 'L'+(PCW-PCPAD)+' '+(PCH-PCPAD)+' Z';
     return {line:d, fill:df};
   }
-  var pcTimer=null, pcRaf=null, activeVibe='rooftop';
-  function clearPC(){ if(pcTimer){clearTimeout(pcTimer);pcTimer=null;} if(pcRaf){cancelAnimationFrame(pcRaf);pcRaf=null;} }
+  var pcPlayTask = null, activeVibe='rooftop', pcTyping=null;
+
+  // render a vibe's curve statically (always-visible baseline)
+  function renderVibeStatic(key){
+    var v = VIBES[key]; if(!v) return;
+    try {
+      var paths = pcPaths(v.curve);
+      if(pcGhost) pcGhost.setAttribute('d', paths.line);
+      if(pcFill) pcFill.setAttribute('d', paths.fill);
+      if(pcDraw) pcDraw.setAttribute('d', paths.line);
+      if(pcClipRect) pcClipRect.setAttribute('width', PCW);
+      if(pcName) pcName.textContent = v.name;
+      if(pcBpm) pcBpm.textContent = v.bpm;
+      if(pcBar) pcBar.textContent = 'bar '+v.len+' / '+v.len;
+    } catch(e){}
+  }
+
+  function stopPCPlay(){
+    if(pcPlayTask){
+      var idx = tasks.indexOf(pcPlayTask);
+      if(idx>=0) tasks.splice(idx,1);
+      pcPlayTask = null;
+    }
+    if(pcTyping){ clearTimeout(pcTyping); pcTyping = null; }
+  }
 
   function typeInto(str, done){
-    if(reduce){ promptText.textContent = str; if(done) done(); return; }
+    if(reduce || !promptText){ if(promptText) promptText.textContent = str; if(done) done(); return; }
     var i=0;
     var caret='<span style="display:inline-block;width:2px;height:1.05em;vertical-align:-.15em;background:var(--c-teal);box-shadow:0 0 6px var(--c-teal);animation:blink 1.05s steps(1) infinite"></span>';
     promptText.innerHTML=caret;
     function step(){
       i++;
       promptText.innerHTML = str.slice(0,i).replace(/</g,'&lt;') + caret;
-      if(i<str.length){ pcTimer=setTimeout(step, 16+Math.random()*26); }
-      else { pcTimer=setTimeout(function(){ promptText.textContent=str; if(done)done(); }, 240); }
+      if(i<str.length){ pcTyping=setTimeout(step, 16+Math.random()*26); }
+      else { pcTyping=setTimeout(function(){ promptText.textContent=str; if(done)done(); }, 240); }
     }
     step();
   }
   function drawSet(key){
     var v = VIBES[key]; if(!v) return;
-    clearPC();
+    stopPCPlay();
     activeVibe = key;
     pcChips.forEach(function(c){ c.classList.toggle('active', c.getAttribute('data-vibe')===key); });
-    if(pcName) pcName.textContent = v.name;
-    if(pcBpm) pcBpm.textContent = v.bpm;
-    var paths = pcPaths(v.curve);
-    pcGhost.setAttribute('d', paths.line);
-    pcFill.setAttribute('d', paths.fill);
-    pcDraw.setAttribute('d', paths.line);
-    pcClipRect.setAttribute('width','0');
-    pcLine.setAttribute('opacity','0'); pcHead.setAttribute('opacity','0');
-    pcDot.style.background='var(--mist)'; pcDot.style.boxShadow='none';
-    pcStatTxt.textContent='drafting'; pcStat.style.color='var(--mist)';
-    pcBar.textContent='bar 0 / '+v.len;
+    renderVibeStatic(key);
     if(reduce){
-      pcClipRect.setAttribute('width', PCW);
-      pcStatTxt.textContent='live'; pcDot.style.background='var(--live)'; pcDot.style.boxShadow='0 0 8px var(--live)'; pcStat.style.color='var(--live)';
-      pcBar.textContent='bar '+v.len+' / '+v.len;
+      if(pcStatTxt){ pcStatTxt.textContent='live'; }
+      if(pcDot){ pcDot.style.background='var(--live)'; pcDot.style.boxShadow='0 0 8px var(--live)'; }
+      if(pcStat){ pcStat.style.color='var(--live)'; }
       return;
     }
-    var t0=performance.now(), drawMs=1200;
-    pcStatTxt.textContent='drawing the arc';
-    function dphase(now){
-      var p=Math.min(1,(now-t0)/drawMs), eased=1-Math.pow(1-p,3);
-      pcClipRect.setAttribute('width', Math.max(0,eased*PCW).toFixed(1));
-      if(p<1){ pcRaf=requestAnimationFrame(dphase); }
-      else { startPC(v); }
-    }
-    pcRaf=requestAnimationFrame(dphase);
+    // animate: wipe the line in via the clip rect, then run a playhead
+    if(pcClipRect) pcClipRect.setAttribute('width','0');
+    if(pcLine) pcLine.setAttribute('opacity','0');
+    if(pcHead) pcHead.setAttribute('opacity','0');
+    if(pcDot){ pcDot.style.background='var(--mist)'; pcDot.style.boxShadow='none'; }
+    if(pcStatTxt) pcStatTxt.textContent='drawing the arc';
+    if(pcStat) pcStat.style.color='var(--mist)';
+    if(pcBar) pcBar.textContent='bar 0 / '+v.len;
+    var t0=null, drawMs=1.2;
+    var drawTask = function(t, now){
+      if(t0===null) t0 = now;
+      var p=Math.min(1,(now-t0)/(drawMs*1000)), eased=1-Math.pow(1-p,3);
+      if(pcClipRect) pcClipRect.setAttribute('width', Math.max(0,eased*PCW).toFixed(1));
+      if(p>=1){
+        var idx=tasks.indexOf(drawTask); if(idx>=0) tasks.splice(idx,1);
+        startPC(v);
+      }
+    };
+    pcPlayTask = drawTask;
+    tasks.push(drawTask);
   }
   function startPC(v){
-    pcStatTxt.textContent='live'; pcDot.style.background='var(--live)'; pcDot.style.boxShadow='0 0 8px var(--live)'; pcStat.style.color='var(--live)';
-    pcLine.setAttribute('opacity','1'); pcHead.setAttribute('opacity','1');
-    var t0=performance.now(), sweep=6500;
-    function play(now){
-      var p=((now-t0)/sweep)%1;
+    if(pcStatTxt) pcStatTxt.textContent='live';
+    if(pcDot){ pcDot.style.background='var(--live)'; pcDot.style.boxShadow='0 0 8px var(--live)'; }
+    if(pcStat) pcStat.style.color='var(--live)';
+    if(pcLine) pcLine.setAttribute('opacity','1');
+    if(pcHead) pcHead.setAttribute('opacity','1');
+    var t0=null, sweep=6.5;
+    var playTask = function(t, now){
+      if(t0===null) t0 = now;
+      var p=((now-t0)/(sweep*1000))%1;
       var x=PCPAD+p*(PCW-PCPAD*2);
       var e=sampleArr(v.curve,p);
       var y=PCPAD+(1-e)*(PCH-PCPAD*2);
-      pcLine.setAttribute('x1',x.toFixed(1)); pcLine.setAttribute('x2',x.toFixed(1));
-      pcHead.setAttribute('cx',x.toFixed(1)); pcHead.setAttribute('cy',y.toFixed(1));
-      pcBar.textContent='bar '+Math.round(p*v.len)+' / '+v.len;
-      pcRaf=requestAnimationFrame(play);
-    }
-    pcRaf=requestAnimationFrame(play);
+      if(pcLine){ pcLine.setAttribute('x1',x.toFixed(1)); pcLine.setAttribute('x2',x.toFixed(1)); }
+      if(pcHead){ pcHead.setAttribute('cx',x.toFixed(1)); pcHead.setAttribute('cy',y.toFixed(1)); }
+      if(pcBar) pcBar.textContent='bar '+Math.round(p*v.len)+' / '+v.len;
+    };
+    pcPlayTask = playTask;
+    tasks.push(playTask);
   }
-  pcChips.forEach(function(c){ c.addEventListener('click', function(){
-    var key=c.getAttribute('data-vibe');
-    typeInto(VIBES[key].ph, function(){ drawSet(key); });
-  }); });
+  try {
+    pcChips.forEach(function(c){ c.addEventListener('click', function(){
+      var key=c.getAttribute('data-vibe');
+      typeInto(VIBES[key].ph, function(){ drawSet(key); });
+    }); });
+  } catch(e){}
+
+  // baseline: render the default vibe statically right now (no JS gating of content)
+  renderVibeStatic('rooftop');
 
   var promptCard = document.getElementById('promptCard');
   var pcAutoFired = false;
   function pcAutoRun(){ if(pcAutoFired) return; pcAutoFired = true; typeInto(VIBES.rooftop.ph, function(){ drawSet('rooftop'); }); }
-  if(promptCard){
-    if(reduce){
-      promptText.textContent = VIBES.rooftop.ph;
-      drawSet('rooftop');
-    } else if('IntersectionObserver' in window){
-      var pcIO = new IntersectionObserver(function(entries){
-        entries.forEach(function(e){ if(e.isIntersecting){ pcAutoRun(); pcIO.disconnect(); } });
-      }, {threshold:0.18, rootMargin:'0px 0px -10% 0px'});
-      pcIO.observe(promptCard);
-      // fallback: if the card is already in view on load (or the observer is finicky), build it anyway
-      setTimeout(function(){
-        var r = promptCard.getBoundingClientRect();
-        if(!pcAutoFired && r.top < window.innerHeight*0.9 && r.bottom > 0){ pcAutoRun(); }
-      }, 1200);
-    } else {
-      pcAutoRun();
+  try {
+    if(promptCard && !reduce){
+      if('IntersectionObserver' in window){
+        var pcIO = new IntersectionObserver(function(entries){
+          entries.forEach(function(e){ if(e.isIntersecting){ pcAutoRun(); pcIO.disconnect(); } });
+        }, {threshold:0.18, rootMargin:'0px 0px -10% 0px'});
+        pcIO.observe(promptCard);
+        setTimeout(function(){
+          var r = promptCard.getBoundingClientRect();
+          if(!pcAutoFired && r.top < window.innerHeight*0.9 && r.bottom > 0){ pcAutoRun(); }
+        }, 1200);
+      } else { pcAutoRun(); }
     }
-  }
+  } catch(e){}
 
   /* ============================================================
-     7. PRODUCT SHOWCASE (C) - tab switching + workspace mini-anim
+     PRODUCT SHOWCASE (C) - tab switching + cheap float
      ============================================================ */
   var bframe = document.getElementById('bframe');
-  if(bframe){
-    var bfViews = Array.prototype.slice.call(bframe.querySelectorAll('.bf-view'));
-    var bfTabs = Array.prototype.slice.call(bframe.querySelectorAll('.bf-tab'));
-    function showView(name){
-      bfViews.forEach(function(v){ v.classList.toggle('active', v.getAttribute('data-view')===name); });
-      bfTabs.forEach(function(t){ t.classList.toggle('active', t.getAttribute('data-view')===name); });
-    }
-    bfTabs.forEach(function(t){ t.addEventListener('click', function(){ showView(t.getAttribute('data-view')); }); });
-    bframe.querySelectorAll('[data-go]').forEach(function(el){ el.addEventListener('click', function(){ showView(el.getAttribute('data-go')); }); });
-
-    var floatRunning = false, floatStart = 0;
-    if(!reduce){
-      function floatFrame(now){
-        if(!floatRunning) return;
-        var t=(now-floatStart)/1000;
-        bframe.style.transform='translateY('+(Math.sin(t*0.6)*5).toFixed(2)+'px)';
-        raf(floatFrame);
+  try {
+    if(bframe){
+      var bfViews = Array.prototype.slice.call(bframe.querySelectorAll('.bf-view'));
+      var bfTabs = Array.prototype.slice.call(bframe.querySelectorAll('.bf-tab'));
+      function showView(name){
+        bfViews.forEach(function(v){ v.classList.toggle('active', v.getAttribute('data-view')===name); });
+        bfTabs.forEach(function(t){ t.classList.toggle('active', t.getAttribute('data-view')===name); });
       }
-      function startFloat(){ if(floatRunning) return; floatRunning = true; floatStart=performance.now(); raf(floatFrame); }
-      onResume(startFloat);
-      startFloat();
+      bfTabs.forEach(function(t){ t.addEventListener('click', function(){ showView(t.getAttribute('data-view')); }); });
+      bframe.querySelectorAll('[data-go]').forEach(function(el){ el.addEventListener('click', function(){ showView(el.getAttribute('data-go')); }); });
+
+      if(!reduce){
+        every(function(t){ bframe.style.transform='translateY('+(Math.sin(t*0.6)*5).toFixed(2)+'px)'; });
+      }
     }
-  }
+  } catch(e){}
 
   function buildWave(el, n, lit){
     if(!el) return;
@@ -1993,60 +1871,64 @@
       el.appendChild(b);
     }
   }
-  buildWave(document.getElementById('wsWaveA'), 34, true);
-  buildWave(document.getElementById('wsWaveB'), 34, false);
+  try {
+    buildWave(document.getElementById('wsWaveA'), 34, true);
+    buildWave(document.getElementById('wsWaveB'), 34, false);
+  } catch(e){}
 
-  var wsDraw=document.getElementById('wsDraw');
-  if(wsDraw){
-    var WSW=600, WSH=118, WSPAD=6;
-    var wsArr=[0.3,0.36,0.42,0.5,0.6,0.7,0.82,0.9,0.86,0.74,0.64,0.58];
-    var wsd='', wsf='';
-    for(var wi=0;wi<=120;wi++){
-      var wp=wi/120, we=sampleArr(wsArr,wp);
-      var wx=WSPAD+wp*(WSW-WSPAD*2), wy=WSPAD+(1-we)*(WSH-WSPAD*2);
-      wsd += (wi===0?'M':'L')+wx.toFixed(1)+' '+wy.toFixed(1)+' ';
-      wsf += (wi===0?('M'+WSPAD+' '+(WSH-WSPAD)+' L'):'L')+wx.toFixed(1)+' '+wy.toFixed(1)+' ';
-    }
-    wsf += 'L'+(WSW-WSPAD)+' '+(WSH-WSPAD)+' Z';
-    wsDraw.setAttribute('d', wsd);
-    document.getElementById('wsGhost').setAttribute('d', wsd);
-    document.getElementById('wsFill').setAttribute('d', wsf);
-    var wsClipRect=document.getElementById('wsClipRect');
-    var wsPlayLine=document.getElementById('wsPlayLine');
-    var wsHead=document.getElementById('wsHead');
-    var wsBar=document.getElementById('wsBar');
-    var wsCurveBar=document.getElementById('wsCurveBar');
-    var wsRunning=false, wt0=0;
-    function wsTick(now){
-      if(!wsRunning) return;
-      var ph=0.58+0.06*Math.sin((now-wt0)/1400);
-      var x=WSPAD+ph*(WSW-WSPAD*2);
-      var e=sampleArr(wsArr,ph);
-      var y=WSPAD+(1-e)*(WSH-WSPAD*2);
-      wsClipRect.setAttribute('width', Math.max(0,x).toFixed(1));
-      wsPlayLine.setAttribute('x1',x.toFixed(1)); wsPlayLine.setAttribute('x2',x.toFixed(1));
-      wsHead.setAttribute('cx',x.toFixed(1)); wsHead.setAttribute('cy',y.toFixed(1));
-      var bar=Math.round(ph*240);
-      if(wsBar) wsBar.textContent=bar; if(wsCurveBar) wsCurveBar.textContent='bar '+bar+' / 240';
-      raf(wsTick);
-    }
-    function startWs(){ if(wsRunning) return; wsRunning=true; wt0=performance.now(); raf(wsTick); }
-    if(!reduce){ onResume(startWs); startWs(); }
-    else { wsClipRect.setAttribute('width', WSPAD+0.58*(WSW-WSPAD*2)); }
+  try {
+    var wsDraw=document.getElementById('wsDraw');
+    if(wsDraw){
+      var WSW=600, WSH=118, WSPAD=6;
+      var wsArr=[0.3,0.36,0.42,0.5,0.6,0.7,0.82,0.9,0.86,0.74,0.64,0.58];
+      var wsd='', wsf='';
+      for(var wi=0;wi<=120;wi++){
+        var wp=wi/120, we=sampleArr(wsArr,wp);
+        var wx=WSPAD+wp*(WSW-WSPAD*2), wy=WSPAD+(1-we)*(WSH-WSPAD*2);
+        wsd += (wi===0?'M':'L')+wx.toFixed(1)+' '+wy.toFixed(1)+' ';
+        wsf += (wi===0?('M'+WSPAD+' '+(WSH-WSPAD)+' L'):'L')+wx.toFixed(1)+' '+wy.toFixed(1)+' ';
+      }
+      wsf += 'L'+(WSW-WSPAD)+' '+(WSH-WSPAD)+' Z';
+      wsDraw.setAttribute('d', wsd);
+      document.getElementById('wsGhost').setAttribute('d', wsd);
+      document.getElementById('wsFill').setAttribute('d', wsf);
+      var wsClipRect=document.getElementById('wsClipRect');
+      var wsPlayLine=document.getElementById('wsPlayLine');
+      var wsHead=document.getElementById('wsHead');
+      var wsBar=document.getElementById('wsBar');
+      var wsCurveBar=document.getElementById('wsCurveBar');
+      if(!reduce){
+        var wt0=null;
+        every(function(t, now){
+          if(wt0===null) wt0 = now;
+          var ph=0.58+0.06*Math.sin((now-wt0)/1400);
+          var x=WSPAD+ph*(WSW-WSPAD*2);
+          var e=sampleArr(wsArr,ph);
+          var y=WSPAD+(1-e)*(WSH-WSPAD*2);
+          wsClipRect.setAttribute('width', Math.max(0,x).toFixed(1));
+          wsPlayLine.setAttribute('x1',x.toFixed(1)); wsPlayLine.setAttribute('x2',x.toFixed(1));
+          wsHead.setAttribute('cx',x.toFixed(1)); wsHead.setAttribute('cy',y.toFixed(1));
+          var bar=Math.round(ph*240);
+          if(wsBar) wsBar.textContent=bar; if(wsCurveBar) wsCurveBar.textContent='bar '+bar+' / 240';
+        });
+      } else {
+        wsClipRect.setAttribute('width', WSPAD+0.58*(WSW-WSPAD*2));
+      }
 
-    var wsMeter=document.getElementById('wsMeter');
-    if(wsMeter){
-      for(var m=0;m<22;m++){
-        var bb=document.createElement('i');
-        bb.style.animationDelay=(m*0.05)+'s';
-        bb.style.height=(30+Math.random()*60)+'%';
-        wsMeter.appendChild(bb);
+      var wsMeter=document.getElementById('wsMeter');
+      if(wsMeter){
+        for(var m=0;m<22;m++){
+          var bb=document.createElement('i');
+          bb.style.animationDelay=(m*0.05)+'s';
+          bb.style.height=(30+Math.random()*60)+'%';
+          wsMeter.appendChild(bb);
+        }
       }
     }
-  }
+  } catch(e){}
 
   /* ============================================================
-     8. SELF-TYPING CUE SHEET (mono) - the dev angle
+     SELF-TYPING CUE SHEET (mono) - renders fully, types as enhancement
      ============================================================ */
   var CUE_TOKENS = [
     ['pun','{\n'],
@@ -2068,6 +1950,7 @@
   ];
   var cueCode = document.getElementById('cueCode');
   function renderCueFull(){
+    if(!cueCode) return;
     var html='';
     CUE_TOKENS.forEach(function(tk){ html += '<span class="t-'+tk[0]+'">'+tk[1].replace(/</g,'&lt;')+'</span>'; });
     cueCode.innerHTML = html;
@@ -2088,48 +1971,50 @@
     }
     step();
   }
-  if(cueCode){
-    if('IntersectionObserver' in window && !reduce){
-      var cueIO=new IntersectionObserver(function(entries){
-        entries.forEach(function(e){ if(e.isIntersecting){ typeCue(); cueIO.disconnect(); } });
-      }, {threshold:0.3});
-      cueIO.observe(cueCode);
-    } else { renderCueFull(); }
-  }
-
-  /* ---- nav EQ mark beat-pulse ---- */
-  if(!reduce){
-    var em=document.querySelector('.eq-mark');
-    if(em){
-      var rects=em.querySelectorAll('rect');
-      var es=document.createElement('style');
-      es.textContent='@keyframes navbar1{0%,100%{transform:scaleY(.7);transform-origin:bottom}50%{transform:scaleY(1)}}@keyframes navbar2{0%,100%{transform:scaleY(1);transform-origin:bottom}50%{transform:scaleY(.62)}}@keyframes navbar3{0%,100%{transform:scaleY(.82);transform-origin:bottom}50%{transform:scaleY(1)}}';
-      document.head.appendChild(es);
-      Array.prototype.forEach.call(rects, function(r){ r.style.transformBox='fill-box'; });
-      if(rects[0]) rects[0].style.animation='navbar1 1.1s var(--ease) infinite';
-      if(rects[1]) rects[1].style.animation='navbar2 1.1s var(--ease) infinite';
-      if(rects[2]) rects[2].style.animation='navbar3 1.1s var(--ease) infinite';
+  try {
+    if(cueCode){
+      // render full immediately (visible default), then optionally re-type on scroll-in
+      renderCueFull();
+      if('IntersectionObserver' in window && !reduce){
+        var typed = false;
+        var cueIO=new IntersectionObserver(function(entries){
+          entries.forEach(function(e){ if(e.isIntersecting && !typed){ typed = true; typeCue(); cueIO.disconnect(); } });
+        }, {threshold:0.3});
+        cueIO.observe(cueCode);
+      }
     }
-  }
+  } catch(e){}
+
+  /* ---- nav EQ mark beat-pulse (CSS keyframes, cheap) ---- */
+  try {
+    if(!reduce){
+      var em=document.querySelector('.eq-mark');
+      if(em){
+        var rects=em.querySelectorAll('rect');
+        var es=document.createElement('style');
+        es.textContent='@keyframes navbar1{0%,100%{transform:scaleY(.7);transform-origin:bottom}50%{transform:scaleY(1)}}@keyframes navbar2{0%,100%{transform:scaleY(1);transform-origin:bottom}50%{transform:scaleY(.62)}}@keyframes navbar3{0%,100%{transform:scaleY(.82);transform-origin:bottom}50%{transform:scaleY(1)}}';
+        document.head.appendChild(es);
+        Array.prototype.forEach.call(rects, function(r){ r.style.transformBox='fill-box'; });
+        if(rects[0]) rects[0].style.animation='navbar1 1.1s var(--ease) infinite';
+        if(rects[1]) rects[1].style.animation='navbar2 1.1s var(--ease) infinite';
+        if(rects[2]) rects[2].style.animation='navbar3 1.1s var(--ease) infinite';
+      }
+    }
+  } catch(e){}
 
   /* ============================================================
-     9. PAUSE all RAF loops on tab hide; resume exactly one each.
+     Pause the single RAF loop on tab hide; resume on show.
+     CSS blob animations pause automatically with the page.
      ============================================================ */
-  var loopsRunning = !reduce;
-  document.addEventListener('visibilitychange', function(){
-    if(document.hidden){
-      stopViz();
-      rafIds.forEach(function(id){ cancelAnimationFrame(id); });
-      rafIds = [];
-      if(pcRaf){ cancelAnimationFrame(pcRaf); pcRaf=null; }
-      vizRunning=false; heroRunning=false; jogRunning=false;
-      loopsRunning = false;
-    } else if(!reduce && !loopsRunning){
-      loopsRunning = true;
-      restarters.forEach(function(fn){ try{ fn(); }catch(e){} });
-      scrubSet();
-    }
-  });
+  try {
+    document.addEventListener('visibilitychange', function(){
+      if(document.hidden){ stopLoop(); }
+      else if(!reduce){ lastTs = 0; startLoop(); scrubSet(); }
+    });
+  } catch(e){}
+
+  // GO
+  if(!reduce){ startLoop(); }
 
 })();
 </script>
